@@ -593,6 +593,7 @@
   </div>
 
   <div class="toolbar">
+    <button id="shareBtn">🔗 Condividi link</button>
     <button id="exportPdfBtn">Esporta PDF</button>
     <button id="exportBtn">Esporta dati (JSON)</button>
     <label for="importFile" class="file-label">Importa dati (JSON)</label>
@@ -1294,6 +1295,26 @@ const firebaseConfig = {
     if(!e.target.value) return;
     periodEnd = parseDateStr(e.target.value);
     render();
+  });
+
+  document.getElementById('shareBtn').addEventListener('click', ()=>{
+    const url = window.location.href.split('?')[0]; // link pulito senza parametri
+    if(navigator.share){
+      // Web Share API: apre il foglio di condivisione nativo su iPhone/Android
+      navigator.share({
+        title: 'Prospetto Turni',
+        text: 'Apri il prospetto turni condiviso:',
+        url: url
+      }).catch(()=>{}); // ignora se l'utente annulla
+    }else{
+      // Fallback: copia negli appunti
+      navigator.clipboard.writeText(url).then(()=>{
+        flashStatus('Link copiato negli appunti!');
+      }).catch(()=>{
+        // Ultimo fallback: mostra il link in un prompt
+        prompt('Copia questo link:', url);
+      });
+    }
   });
 
   document.getElementById('addDeptTop').addEventListener('click', addDepartment);
