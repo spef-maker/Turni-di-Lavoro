@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ordini Siculabrioche</title>
+<style>
+:root {
+  --ink:#1a1714; --paper:#f5f2ec; --white:#fff; --line:#ddd8ce;
+  --line-strong:#b8b0a0; --muted:#8a847a; --accent:#c84b2f;
+  --green:#3a7d52; --green-soft:#d4eadc; --gold:#c49a2a; --gold-soft:#faf0d0;
+  --blue:#2d5fa8; --radius:5px;
+  --font:--apple-system,'Segoe UI',sans-serif;
+  --mono:'SFMono-Regular','Consolas',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,'Segoe UI',sans-serif;background:var(--paper);color:var(--ink);font-size:13px;}
+
+/* HEADER */
+.hdr{
+  background:var(--ink);color:#fff;padding:0 18px;
+  display:flex;align-items:center;gap:16px;height:52px;
+  position:sticky;top:0;z-index:50;
+}
+.hdr h1{font-size:18px;font-weight:400;font-family:Georgia,serif;white-space:nowrap;}
+.hdr .div{flex:1;}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);transition:background .3s;}
+.sync-dot.ok{background:#5cb87a;} .sync-dot.saving{background:var(--gold);} .sync-dot.err{background:var(--accent);}
+.sync-lbl{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.45);letter-spacing:1px;text-transform:uppercase;}
+
+/* TABS */
+.tabs{display:flex;background:#fff;border-bottom:2px solid var(--line);padding:0 18px;gap:0;overflow-x:auto;}
+.tab{padding:11px 18px;border:none;background:transparent;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* MAIN */
+.main{padding:18px;max-width:none;}
+.panel{display:none;} .panel.active{display:block;}
+
+/* TOOLBAR */
+.tbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:var(--radius);font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--line-strong);background:#fff;color:var(--ink);white-space:nowrap;transition:background .12s;}
+.btn:hover{background:var(--ink);color:#fff;border-color:var(--ink);}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+.btn.primary:hover{background:#a83a20;}
+.btn.sm{padding:4px 9px;font-size:11px;}
+
+/* GRID TABLE — main order view */
+.grid-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:#fff;}
+table.grid{border-collapse:collapse;width:100%;}
+table.grid th{
+  background:var(--ink);color:#fff;
+  padding:6px 8px;text-align:center;
+  font-family:var(--mono);font-size:10px;letter-spacing:.5px;text-transform:uppercase;
+  white-space:nowrap;border-right:1px solid rgba(255,255,255,.15);
+  position:sticky;top:52px;z-index:10;
+}
+table.grid th.left{text-align:left;}
+table.grid th.prod-header{background:#2d2926;font-size:9px;}
+table.grid th.imballo-header{background:#3d3632;font-size:9px;color:rgba(255,255,255,.7);}
+table.grid th.tot-header{background:#c84b2f;}
+table.grid th.diff-header{background:#2d5fa8;}
+
+table.grid td{
+  padding:5px 7px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);
+  vertical-align:middle;white-space:nowrap;
+}
+table.grid tr:hover td{background:#faf8f4;}
+table.grid .client-cell{min-width:200px;font-weight:600;position:sticky;left:0;background:#fff;z-index:5;border-right:2px solid var(--line-strong);}
+table.grid tr:hover .client-cell{background:#faf8f4;}
+table.grid .cod-cell{min-width:60px;font-family:var(--mono);font-size:11px;color:var(--muted);position:sticky;left:200px;background:#fff;z-index:5;}
+table.grid tr:hover .cod-cell{background:#faf8f4;}
+
+/* number inputs in grid */
+table.grid .qty-input{
+  width:52px;text-align:center;border:none;background:transparent;
+  font-size:13px;font-family:var(--mono);color:var(--ink);
+  padding:2px 4px;border-radius:3px;
+}
+table.grid .qty-input:focus{outline:2px solid var(--accent);background:#fff;}
+table.grid .qty-input::-webkit-inner-spin-button{-webkit-appearance:none;}
+
+/* totals */
+.tot-cell{background:#fef2ef !important;font-weight:700;font-family:var(--mono);text-align:right;color:var(--accent);}
+.diff-pos{background:#d4eadc !important;font-weight:700;font-family:var(--mono);text-align:right;color:var(--green);}
+.diff-neg{background:#fef2ef !important;font-weight:700;font-family:var(--mono);text-align:right;color:var(--accent);}
+.diff-zero{background:#f5f5f5 !important;font-weight:700;font-family:var(--mono);text-align:right;color:var(--muted);}
+
+/* footer totals row */
+.grid-footer td{background:var(--ink) !important;color:#fff !important;font-weight:700;font-family:var(--mono);text-align:right;padding:6px 8px;border-right:1px solid rgba(255,255,255,.15);}
+.grid-footer .client-cell{background:var(--ink) !important;text-align:left;font-family:Georgia,serif;font-size:13px;letter-spacing:.5px;}
+
+/* PRODUZIONE PANEL */
+.prod-section{margin-bottom:24px;}
+.prod-section h3{font-family:Georgia,serif;font-size:17px;font-weight:400;margin-bottom:12px;border-bottom:1px solid var(--line);padding-bottom:6px;}
+.prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;}
+.prod-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;}
+.prod-card-hdr{background:var(--ink);color:#fff;padding:8px 12px;font-size:13px;font-weight:600;}
+.prod-card table{width:100%;border-collapse:collapse;}
+.prod-card td{padding:6px 12px;border-bottom:1px solid var(--line);font-size:12px;}
+.prod-card tr:last-child td{border-bottom:none;}
+.prod-card td:last-child{text-align:right;font-weight:700;font-family:var(--mono);}
+.prod-card td:first-child{color:var(--muted);}
+.prod-tot-row td{background:var(--paper);font-weight:700;font-size:13px;}
+
+/* ANAGRAFICA PANEL */
+.anag-tbar{display:flex;gap:8px;margin-bottom:14px;align-items:center;flex-wrap:wrap;}
+.anag-tbar input{padding:7px 10px;border:1px solid var(--line-strong);border-radius:var(--radius);font-size:13px;flex:1;min-width:200px;}
+.anag-table-wrap{overflow-y:auto;max-height:65vh;border:1px solid var(--line);border-radius:var(--radius);}
+table.anag{width:100%;border-collapse:collapse;}
+table.anag th{background:var(--ink);color:#fff;padding:7px 12px;text-align:left;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:1px;position:sticky;top:0;}
+table.anag td{padding:6px 12px;border-bottom:1px solid var(--line);font-size:13px;}
+table.anag tr:hover td{background:#faf8f4;}
+
+/* AUTOCOMPLETE */
+.autocomplete-wrap{position:relative;flex:1;}
+.autocomplete-list{
+  position:absolute;top:100%;left:0;right:0;
+  background:#fff;border:1px solid var(--line-strong);border-top:none;
+  border-radius:0 0 var(--radius) var(--radius);
+  max-height:220px;overflow-y:auto;z-index:200;
+  box-shadow:0 4px 12px rgba(0,0,0,.1);
+}
+.autocomplete-list .ac-item{
+  padding:7px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--line);
+}
+.autocomplete-list .ac-item:hover,.autocomplete-list .ac-item.sel{background:var(--accent-soft,#fef2ef);}
+.autocomplete-list .ac-item .ac-cod{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:8px;}
+
+/* ADD ROW FORM */
+.add-row-form{
+  display:flex;gap:8px;align-items:center;padding:10px 14px;
+  background:var(--gold-soft);border-top:2px solid var(--gold);flex-wrap:wrap;
+}
+.add-row-form .ac-input{
+  padding:7px 10px;border:1px solid var(--line-strong);border-radius:var(--radius);
+  font-size:13px;background:#fff;width:260px;
+}
+
+/* IMPOSTAZIONI PRODUZIONE */
+.prod-settings{
+  display:flex;gap:12px;align-items:center;margin-bottom:18px;flex-wrap:wrap;
+  background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:12px 16px;
+}
+.prod-settings label{
+  display:flex;align-items:center;gap:6px;font-family:var(--mono);
+  font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);
+}
+.prod-settings input[type=number]{
+  padding:5px 8px;border:1px solid var(--line-strong);border-radius:4px;
+  width:80px;font-size:13px;font-family:var(--mono);
+}
+
+/* LOADING */
+.loading{
+  display:none;position:fixed;inset:0;background:rgba(245,242,236,.85);z-index:9999;
+  align-items:center;justify-content:center;
+}
+.loading.vis{display:flex;}
+.loading-box{
+  background:#fff;border:1px solid var(--line);border-radius:var(--radius);
+  padding:32px 40px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px;color:var(--muted);
+}
+.spinner{width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.empty{text-align:center;padding:48px;color:var(--muted);font-style:italic;}
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js"></script>
+</head>
+<body>
+
+<header class="hdr">
+  <h1>Siculabrioche · Ordini</h1>
+  <div class="div"></div>
+  <span class="sync-dot" id="syncDot"></span>
+  <span class="sync-lbl" id="syncLbl">–</span>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="ordini">📋 Ordini</button>
+  <button class="tab" data-tab="produzione">🏭 Produzione</button>
+  <button class="tab" data-tab="anagrafica">👥 Anagrafica</button>
+</nav>
+
+<div class="main">
+
+  <!-- ── ORDINI ── -->
+  <div class="panel active" id="tab-ordini">
+    <div class="tbar">
+      <button class="btn primary" id="btnAddRow">+ Aggiungi cliente</button>
+      <button class="btn" id="btnNewSession">🗓 Nuova sessione ordini</button>
+      <button class="btn" id="btnExportPdf">Esporta PDF</button>
+      <span style="flex:1"></span>
+      <label style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">
+        Data spedizione:
+        <input type="date" id="sessionDate" style="padding:6px 8px;border:1px solid var(--line-strong);border-radius:var(--radius);font-size:13px;">
+      </label>
+    </div>
+    <div id="noClientsBanner" style="display:none;background:#faf0d0;border:1px solid #c49a2a;border-radius:5px;padding:12px 16px;margin-bottom:14px;font-size:13px;">
+      ⚠️ <strong>Anagrafica vuota</strong> — Vai alla tab <strong>👥 Anagrafica</strong> e carica il file <code>clienti.csv</code> prima di inserire ordini.
+    </div>
+
+    <!-- Add client row (hidden by default) -->
+    <div class="add-row-form" id="addRowForm" style="display:none;">
+      <div class="autocomplete-wrap" id="acWrap">
+        <input type="text" class="ac-input" id="acInput" placeholder="Cerca cliente per nome o codice…" autocomplete="off">
+        <div class="autocomplete-list" id="acList" style="display:none;"></div>
+      </div>
+      <button class="btn primary" id="btnConfirmAdd">Aggiungi</button>
+      <button class="btn" id="btnCancelAdd">Annulla</button>
+    </div>
+
+    <div class="grid-wrap" id="gridWrap">
+      <div class="empty" id="gridEmpty">Nessun ordine. Clicca "+ Aggiungi cliente" per iniziare.</div>
+    </div>
+  </div>
+
+  <!-- ── PRODUZIONE ── -->
+  <div class="panel" id="tab-produzione">
+    <div class="prod-settings">
+      <strong style="font-family:Georgia,serif;font-size:15px;font-weight:400;">Obiettivo produzione:</strong>
+      <label>Target totale pezzi <input type="number" id="targetTotal" placeholder="es. 50000" min="0"></label>
+      <span style="color:var(--muted);font-size:12px;">oppure lascia vuoto per vedere solo i totali ordini</span>
+    </div>
+    <div id="prodContent"><div class="empty">Aggiungi ordini per vedere il riepilogo produzione.</div></div>
+  </div>
+
+  <!-- ── ANAGRAFICA ── -->
+  <div class="panel" id="tab-anagrafica">
+    <div class="anag-tbar">
+      <input type="text" id="anagSearch" placeholder="Cerca per nome o codice…">
+      <label class="btn primary" for="anagUpload">📁 Carica file clienti (CSV)</label>
+      <input type="file" id="anagUpload" accept=".csv,.txt" style="display:none;">
+      <button class="btn" id="btnAddClient">+ Nuovo cliente</button>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--muted);" id="anagCount"></span>
+    </div>
+    <div id="firstRunBanner" style="display:none;background:#faf0d0;border:1px solid #c49a2a;border-radius:5px;padding:14px 18px;margin-bottom:14px;font-size:13px;line-height:1.7;">
+      <strong>👋 Prima configurazione</strong> — Nessun cliente in anagrafica.<br>
+      Clicca <strong>"📁 Carica file clienti (CSV)"</strong> e seleziona il file <code>clienti.csv</code> che hai scaricato.<br>
+      I clienti verranno salvati automaticamente su Firebase per tutti gli utenti.
+    </div>
+    <div class="anag-table-wrap">
+      <table class="anag">
+        <thead><tr><th>Codice</th><th>Ragione Sociale</th><th></th></tr></thead>
+        <tbody id="anagBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<div class="loading vis" id="loading">
+  <div class="loading-box"><div class="spinner"></div><div>Connessione…</div></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// FIREBASE CONFIG
+// ══════════════════════════════════════════
+const firebaseConfig = {
+  apiKey:            "AIzaSyB08NmunQbwid4W4bZIBdAE3Kd-0P5Mih8",
+  authDomain:        "turni-lavoro-543c6.firebaseapp.com",
+  databaseURL:       "https://turni-lavoro-543c6-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:         "turni-lavoro-543c6",
+  storageBucket:     "turni-lavoro-543c6.firebasestorage.app",
+  messagingSenderId: "360806251809",
+  appId:             "1:360806251809:web:e75e583630d2d9d14b1260"
+};
+
+// ══════════════════════════════════════════
+// PRODOTTI + IMBALLI
+// ══════════════════════════════════════════
+const PRODUCTS = [
+  { id:'brioche',    name:'BRIOCHE',           imballi:[112,104,52,26],  pz_per_imballo:{112:112,104:104,52:52,26:26}, unit:'imballi' },
+  { id:'mini',       name:'MINI',              imballi:[112,52,26],      pz_per_imballo:{112:112,52:52,26:26},         unit:'imballi' },
+  { id:'paffutella', name:'PAFFUTELLA',        imballi:[80,40,20],       pz_per_imballo:{80:80,40:40,20:20},           unit:'imballi' },
+  { id:'panzotta',   name:'PANZOTTA',          imballi:[112,104,52,26],  pz_per_imballo:{112:112,104:104,52:52,26:26}, unit:'imballi' },
+  { id:'choco',      name:'BRIOSCIA CHOCO',    imballi:[112,52,26],      pz_per_imballo:{112:112,52:52,26:26},         unit:'imballi' },
+  { id:'mandorla',   name:'PASTA MANDORLA',    imballi:['pz'],           pz_per_imballo:{pz:1},                        unit:'pz' },
+  { id:'lattante',   name:'PASTA LATTANTE',    imballi:['pz'],           pz_per_imballo:{pz:1},                        unit:'pz' },
+];
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let db = null;
+let clients = [];       // [{cod, nome}]
+let orders = {};        // sessionId → { date, rows: [{clientCod, clientNome, qtys:{brioche:{112:0,...},...}}] }
+let currentSession = null;
+let notifyChange = ()=>{};
+let saveDebounce = null;
+let isRemoteUpdate = false;
+
+// ══════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════
+function uid(){ return 'r_'+Date.now()+'_'+Math.random().toString(36).slice(2,6); }
+function todayStr(){ const d=new Date(); return d.toISOString().slice(0,10); }
+function esc(s){ return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function calcPzRow(row){
+  let tot = 0;
+  PRODUCTS.forEach(p=>{
+    (p.imballi).forEach(imb=>{
+      const v = parseInt((row.qtys||{})[p.id]?.[imb]||0);
+      tot += v * p.pz_per_imballo[imb];
+    });
+  });
+  return tot;
+}
+
+function setSyncStatus(cls,msg){
+  document.getElementById('syncDot').className='sync-dot '+cls;
+  document.getElementById('syncLbl').textContent=msg;
+}
+
+// ══════════════════════════════════════════
+// SESSION MANAGEMENT
+// ══════════════════════════════════════════
+function ensureSession(){
+  if(currentSession && orders[currentSession]) return;
+  const date = document.getElementById('sessionDate').value || todayStr();
+  currentSession = 'ses_'+date.replace(/-/g,'');
+  if(!orders[currentSession]) orders[currentSession] = { date, rows:[] };
+}
+
+function getSession(){
+  ensureSession();
+  return orders[currentSession];
+}
+
+// ══════════════════════════════════════════
+// RENDER ORDINI GRID
+// ══════════════════════════════════════════
+function renderGrid(){
+  ensureSession();
+  const ses = getSession();
+  const rows = ses ? (ses.rows || []) : [];
+
+  console.log('renderGrid called, rows.length:', rows.length, 'session:', currentSession);
+  const nb = document.getElementById('noClientsBanner');
+  if(nb) nb.style.display = clients.length === 0 ? 'block' : 'none';
+
+  const wrap = document.getElementById('gridWrap');
+  if(!wrap) return;
+
+  if(rows.length === 0){
+    wrap.innerHTML = '<div class="empty">Nessun ordine. Clicca "+ Aggiungi cliente" per iniziare.</div>';
+    return;
+  }
+
+  // Build header
+  let head1 = `<tr>
+    <th class="left" rowspan="2" style="min-width:200px;left:0;z-index:15;">CLIENTE</th>
+    <th rowspan="2" style="min-width:60px;left:200px;z-index:15;">COD.</th>`;
+
+  PRODUCTS.forEach(p=>{
+    head1 += `<th class="prod-header" colspan="${p.imballi.length+1}">${esc(p.name)}</th>`;
+  });
+  head1 += `<th class="tot-header" rowspan="2">TOT PZ</th>
+    <th class="diff-header" rowspan="2">DA PROD./VENDERE</th>
+    <th rowspan="2"></th></tr>`;
+
+  let head2 = '<tr>';
+  PRODUCTS.forEach(p=>{
+    p.imballi.forEach(imb=>{
+      head2 += `<th class="imballo-header">${imb}</th>`;
+    });
+    head2 += `<th class="imballo-header" style="color:#f5a58a;">TOT</th>`;
+  });
+  head2 += '</tr>';
+
+  // Build rows
+  let totalPz = 0;
+  const colTotals = {}; // prodId → imballo → total
+  PRODUCTS.forEach(p=>{ colTotals[p.id]={}; p.imballi.forEach(i=>colTotals[p.id][i]=0); colTotals[p.id]['_tot']=0; });
+
+  let bodyRows = rows.map((row,ri)=>{
+    let cells = '';
+    let rowPz = 0;
+    PRODUCTS.forEach(p=>{
+      let prodPz = 0;
+      p.imballi.forEach(imb=>{
+        const v = parseInt((row.qtys||{})[p.id]?.[imb]||0);
+        const pz = v * p.pz_per_imballo[imb];
+        prodPz += pz;
+        colTotals[p.id][imb] += v;
+        cells += `<td style="text-align:center;">
+          <input type="number" class="qty-input" min="0"
+            data-ri="${ri}" data-pid="${p.id}" data-imb="${imb}"
+            value="${v||''}">
+        </td>`;
+      });
+      colTotals[p.id]['_tot'] += prodPz;
+      cells += `<td class="tot-cell" id="ptot-${ri}-${p.id}" style="min-width:50px;">${prodPz||''}</td>`;
+      rowPz += prodPz;
+    });
+    totalPz += rowPz;
+
+    return `<tr data-ri="${ri}">
+      <td class="client-cell">${esc(row.clientNome||'')}</td>
+      <td class="cod-cell">${esc(row.clientCod||'')}</td>
+      ${cells}
+      <td class="tot-cell" id="rtot-${ri}">${rowPz||''}</td>
+      <td class="${rowPz>0?'diff-pos':'diff-zero'}" id="diff-${ri}">${rowPz||''}</td>
+      <td><button class="btn sm" onclick="removeRow(${ri})" title="Elimina riga">🗑</button></td>
+    </tr>`;
+  }).join('');
+
+  // Footer totals
+  let footCells = '';
+  PRODUCTS.forEach(p=>{
+    p.imballi.forEach(imb=>{
+      footCells += `<td id="ftot-${p.id}-${imb}">${colTotals[p.id][imb]||''}</td>`;
+    });
+    footCells += `<td id="ftot-${p.id}-tot">${colTotals[p.id]['_tot']||''}</td>`;
+  });
+
+  const target = parseInt(document.getElementById('targetTotal')?.value||0)||0;
+  const diff = target ? (target - totalPz) : 0;
+  const diffClass = target ? (diff>0?'diff-pos':diff<0?'diff-neg':'diff-zero') : '';
+  const diffTxt = target ? (diff>0?`+${diff}`:diff) : totalPz||'';
+
+  const table = `<table class="grid">
+    <thead>${head1}${head2}</thead>
+    <tbody>${bodyRows}</tbody>
+    <tfoot>
+      <tr class="grid-footer">
+        <td class="client-cell" colspan="2">TOTALE ORDINI</td>
+        ${footCells}
+        <td id="grand-total">${totalPz||''}</td>
+        <td class="${diffClass}" id="grand-diff">${diffTxt}</td>
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>`;
+
+  wrap.innerHTML = table;
+
+  // Attach input listeners — update state on every keystroke (input),
+  // refresh totals row only on blur so the cursor is never lost
+  document.querySelectorAll('.qty-input').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      const ri = +e.target.dataset.ri;
+      const pid = e.target.dataset.pid;
+      const imb = e.target.dataset.imb;
+      const val = parseInt(e.target.value)||0;
+      const ses = getSession();
+      if(!ses.rows[ri].qtys) ses.rows[ri].qtys = {};
+      if(!ses.rows[ri].qtys[pid]) ses.rows[ri].qtys[pid] = {};
+      ses.rows[ri].qtys[pid][imb] = val;
+      // update row total in place (no full re-render)
+      updateRowTotals(ri);
+    });
+    inp.addEventListener('blur', e=>{
+      // full refresh of footer totals + save after editing
+      updateAllTotals();
+      notifyChange();
+    });
+  });
+}
+
+// ══════════════════════════════════════════
+// IN-PLACE TOTAL UPDATES (no DOM rebuild)
+// ══════════════════════════════════════════
+function calcRowPzFromInputs(ri){
+  let pz = 0;
+  document.querySelectorAll(`.qty-input[data-ri="${ri}"]`).forEach(inp=>{
+    const pid = inp.dataset.pid;
+    const imb = inp.dataset.imb;
+    const v = parseInt(inp.value)||0;
+    const prod = PRODUCTS.find(p=>p.id===pid);
+    if(prod) pz += v * (prod.pz_per_imballo[imb]||0);
+  });
+  return pz;
+}
+
+function updateRowTotals(ri){
+  // update product subtotals for this row
+  PRODUCTS.forEach(p=>{
+    let prodPz = 0;
+    document.querySelectorAll(`.qty-input[data-ri="${ri}"][data-pid="${p.id}"]`).forEach(inp=>{
+      const imb = inp.dataset.imb;
+      const v = parseInt(inp.value)||0;
+      prodPz += v * (p.pz_per_imballo[imb]||0);
+    });
+    const totEl = document.getElementById(`ptot-${ri}-${p.id}`);
+    if(totEl) totEl.textContent = prodPz || '';
+  });
+  // update row total
+  const rowPz = calcRowPzFromInputs(ri);
+  const rtEl = document.getElementById(`rtot-${ri}`);
+  if(rtEl) rtEl.textContent = rowPz || '';
+  const rdEl = document.getElementById(`diff-${ri}`);
+  if(rdEl){ rdEl.textContent = rowPz || ''; rdEl.className = rowPz>0?'diff-pos':'diff-zero'; }
+}
+
+function updateAllTotals(){
+  const ses = getSession();
+  if(!ses) return;
+  const rows = ses.rows || [];
+
+  // recalc column totals from state
+  const colTotals = {};
+  PRODUCTS.forEach(p=>{ colTotals[p.id]={}; p.imballi.forEach(i=>colTotals[p.id][i]=0); colTotals[p.id]['_tot']=0; });
+
+  let totalPz = 0;
+  rows.forEach((row,ri)=>{
+    PRODUCTS.forEach(p=>{
+      p.imballi.forEach(imb=>{
+        const v = parseInt((row.qtys||{})[p.id]?.[imb]||0);
+        colTotals[p.id][imb] += v;
+        colTotals[p.id]['_tot'] += v * p.pz_per_imballo[imb];
+      });
+    });
+    totalPz += calcRowPzFromInputs(ri);
+  });
+
+  // update footer cells
+  PRODUCTS.forEach(p=>{
+    p.imballi.forEach(imb=>{
+      const el = document.getElementById(`ftot-${p.id}-${imb}`);
+      if(el) el.textContent = colTotals[p.id][imb] || '';
+    });
+    const el = document.getElementById(`ftot-${p.id}-tot`);
+    if(el) el.textContent = colTotals[p.id]['_tot'] || '';
+  });
+  const gtEl = document.getElementById('grand-total');
+  if(gtEl) gtEl.textContent = totalPz || '';
+
+  const target = parseInt(document.getElementById('targetTotal')?.value||0)||0;
+  const diff = target ? target - totalPz : totalPz;
+  const diffEl = document.getElementById('grand-diff');
+  if(diffEl){
+    diffEl.textContent = target ? (diff>0?'+'+diff:diff) : (totalPz||'');
+    diffEl.className = target ? (diff>0?'diff-pos':diff<0?'diff-neg':'diff-zero') : '';
+  }
+}
+let selectedClient = null;
+
+function removeRow(ri){
+  if(!confirm('Eliminare questa riga?')) return;
+  const ses = getSession();
+  ses.rows.splice(ri,1);
+  renderGrid();
+  renderProduzione();
+  notifyChange();
+}
+
+// Autocomplete
+let acItems = [];
+let acSel = -1;
+
+document.getElementById('acInput').addEventListener('input', function(){
+  const q = this.value.trim().toLowerCase();
+  const list = document.getElementById('acList');
+  selectedClient = null; // reset when user types
+  if(q.length < 2){ list.style.display='none'; return; }
+  acItems = clients.filter(c=>
+    c.nome.toLowerCase().includes(q) || c.cod.toLowerCase().includes(q)
+  ).slice(0,50);
+  if(acItems.length===0){ list.style.display='none'; return; }
+  list.innerHTML = acItems.map((c,i)=>
+    `<div class="ac-item" data-i="${i}">${esc(c.nome)}<span class="ac-cod">${esc(c.cod)}</span></div>`
+  ).join('');
+  list.style.display='block';
+  acSel = -1;
+});
+
+// Use mousedown (fires before blur) + preventDefault so input keeps focus
+document.getElementById('acList').addEventListener('mousedown', function(e){
+  e.preventDefault(); // prevent input blur
+  const item = e.target.closest('.ac-item');
+  if(!item) return;
+  const c = acItems[+item.dataset.i];
+  selectedClient = c;
+  document.getElementById('acInput').value = c.nome + (c.cod ? ' ['+c.cod+']' : '');
+  document.getElementById('acList').style.display='none';
+});
+
+document.getElementById('acInput').addEventListener('keydown', function(e){
+  const list = document.getElementById('acList');
+  const items = list.querySelectorAll('.ac-item');
+  if(e.key==='ArrowDown'){ e.preventDefault(); acSel=Math.min(acSel+1,items.length-1); }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); acSel=Math.max(acSel-1,0); }
+  else if(e.key==='Enter'){
+    e.preventDefault();
+    if(acSel>=0 && acItems[acSel]){
+      selectedClient=acItems[acSel];
+      this.value=acItems[acSel].nome;
+      list.style.display='none';
+    } else if(acItems.length>0){
+      // auto-select first result on Enter
+      selectedClient=acItems[0];
+      this.value=acItems[0].nome;
+      list.style.display='none';
+    }
+    return;
+  } else { return; }
+  items.forEach((el,i)=>el.classList.toggle('sel',i===acSel));
+});
+
+document.getElementById('acInput').addEventListener('blur', ()=>{
+  // small delay so mousedown on list fires first
+  setTimeout(()=>{ document.getElementById('acList').style.display='none'; }, 150);
+});
+
+document.getElementById('btnAddRow').addEventListener('click', ()=>{
+  const f = document.getElementById('addRowForm');
+  f.style.display = f.style.display==='none'?'flex':'none';
+  if(f.style.display==='flex') document.getElementById('acInput').focus();
+});
+
+document.getElementById('btnCancelAdd').addEventListener('click', ()=>{
+  document.getElementById('addRowForm').style.display='none';
+  document.getElementById('acInput').value='';
+  selectedClient=null;
+});
+
+document.getElementById('btnConfirmAdd').addEventListener('click', ()=>{
+  ensureSession();
+  const ses = getSession();
+  let client = selectedClient;
+
+  if(!client){
+    // try to match typed text against first autocomplete result
+    if(acItems.length > 0){
+      client = acItems[0];
+    } else {
+      const txt = document.getElementById('acInput').value.trim();
+      if(!txt){ alert('Cerca e seleziona un cliente dalla lista.'); return; }
+      client = { cod:'', nome:txt.toUpperCase() };
+    }
+  }
+
+  // check duplicate
+  if(client.cod && ses.rows.find(r=>r.clientCod===client.cod)){
+    if(!confirm(`${client.nome} è già nella lista. Aggiungere comunque?`)) return;
+  }
+
+  ses.rows.push({ id:uid(), clientCod:client.cod||'', clientNome:client.nome, qtys:{} });
+  document.getElementById('acInput').value='';
+  selectedClient = null;
+  acItems = [];
+  document.getElementById('addRowForm').style.display='none';
+  document.getElementById('acList').style.display='none';
+
+  // DEBUG: log state before render
+  console.log('Rows after push:', JSON.stringify(ses.rows));
+  console.log('currentSession:', currentSession);
+  console.log('orders keys:', Object.keys(orders));
+
+  renderGrid();
+  notifyChange();
+});
+
+// ══════════════════════════════════════════
+// NEW SESSION
+// ══════════════════════════════════════════
+document.getElementById('btnNewSession').addEventListener('click', ()=>{
+  if(!confirm('Avviare una nuova sessione ordini? I dati esistenti restano salvati.')) return;
+  const date = document.getElementById('sessionDate').value || todayStr();
+  currentSession = 'ses_'+date.replace(/-/g,'')+uid();
+  orders[currentSession] = { date, rows:[] };
+  renderGrid();
+  renderProduzione();
+  notifyChange();
+});
+
+document.getElementById('sessionDate').addEventListener('change', ()=>{
+  ensureSession();
+  renderGrid();
+});
+
+// ══════════════════════════════════════════
+// PRODUZIONE
+// ══════════════════════════════════════════
+function renderProduzione(){
+  ensureSession();
+  const ses = getSession();
+  const rows = ses.rows || [];
+  const target = parseInt(document.getElementById('targetTotal').value||0)||0;
+
+  // aggregate by product+imballo
+  const totals = {};
+  PRODUCTS.forEach(p=>{ totals[p.id]={}; p.imballi.forEach(i=>totals[p.id][i]=0); });
+
+  rows.forEach(row=>{
+    PRODUCTS.forEach(p=>{
+      p.imballi.forEach(imb=>{
+        totals[p.id][imb] += parseInt((row.qtys||{})[p.id]?.[imb]||0);
+      });
+    });
+  });
+
+  // total pz
+  let totalPz = 0;
+  PRODUCTS.forEach(p=>{
+    p.imballi.forEach(imb=>{
+      totalPz += totals[p.id][imb] * p.pz_per_imballo[imb];
+    });
+  });
+
+  const diff = target ? target - totalPz : null;
+
+  let html = `<div class="prod-section">`;
+  if(target){
+    const cls = diff>0?'color:var(--green)':diff<0?'color:var(--accent)':'color:var(--muted)';
+    html += `<div style="background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin-bottom:18px;display:flex;gap:32px;flex-wrap:wrap;">
+      <div><div style="font-family:Georgia,serif;font-size:26px;">${totalPz.toLocaleString()}</div><div style="font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Pezzi ordinati</div></div>
+      <div><div style="font-family:Georgia,serif;font-size:26px;">${target.toLocaleString()}</div><div style="font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Target produzione</div></div>
+      <div><div style="font-family:Georgia,serif;font-size:26px;${cls}">${diff>0?'+'+diff:diff}</div><div style="font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">${diff>0?'Da vendere ancora':'Produzione in eccesso'}</div></div>
+    </div>`;
+  }
+
+  html += `<h3>Riepilogo per prodotto</h3><div class="prod-grid">`;
+
+  PRODUCTS.forEach(p=>{
+    let prodPz = 0;
+    let rows_html = '';
+    p.imballi.forEach(imb=>{
+      const qty = totals[p.id][imb];
+      const pz = qty * p.pz_per_imballo[imb];
+      prodPz += pz;
+      if(qty > 0 || true){
+        rows_html += `<tr><td>${imb==='pz'?'Pezzi':imb+' pz'}</td><td>${qty}</td></tr>`;
+      }
+    });
+    html += `<div class="prod-card">
+      <div class="prod-card-hdr">${esc(p.name)}</div>
+      <table>
+        <tr><th style="padding:4px 12px;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);background:var(--paper);">Formato</th>
+            <th style="padding:4px 12px;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);background:var(--paper);text-align:right;">Colli</th></tr>
+        ${rows_html}
+        <tr class="prod-tot-row"><td>TOTALE PEZZI</td><td>${prodPz}</td></tr>
+      </table>
+    </div>`;
+  });
+
+  html += `</div></div>`;
+
+  html += `<div class="prod-section">
+    <h3>Dettaglio per cliente</h3>
+    <div class="grid-wrap" style="margin-top:0;">`;
+
+  if((ses.rows||[]).length === 0){
+    html += '<div class="empty">Nessun ordine inserito.</div>';
+  } else {
+    let mini_head = `<table class="grid"><thead><tr>
+      <th class="left" style="left:0;z-index:15;min-width:180px;">CLIENTE</th>`;
+    PRODUCTS.forEach(p=>{ mini_head += `<th class="prod-header" colspan="${p.imballi.length+1}">${esc(p.name)}</th>`; });
+    mini_head += `<th class="tot-header">TOT PZ</th></tr><tr>
+      <th class="left" style="left:0;z-index:15;"></th>`;
+    PRODUCTS.forEach(p=>{
+      p.imballi.forEach(imb=>{ mini_head += `<th class="imballo-header">${imb}</th>`; });
+      mini_head += `<th class="imballo-header" style="color:#f5a58a;">TOT</th>`;
+    });
+    mini_head += '</tr></thead><tbody>';
+
+    let mini_body = (ses.rows||[]).map(row=>{
+      let cells=''; let rowPz=0;
+      PRODUCTS.forEach(p=>{
+        let ppz=0;
+        p.imballi.forEach(imb=>{
+          const v=parseInt((row.qtys||{})[p.id]?.[imb]||0);
+          ppz+=v*p.pz_per_imballo[imb];
+          cells+=`<td style="text-align:center;font-family:var(--mono);font-size:12px;">${v||''}</td>`;
+        });
+        cells+=`<td class="tot-cell">${ppz||''}</td>`;
+        rowPz+=ppz;
+      });
+      return `<tr>
+        <td class="client-cell" style="font-size:12px;">${esc(row.clientNome||'')}</td>
+        ${cells}
+        <td class="tot-cell">${rowPz||''}</td>
+      </tr>`;
+    }).join('');
+
+    html += mini_head + mini_body + '</tbody></table>';
+  }
+
+  html += '</div></div>';
+
+  document.getElementById('prodContent').innerHTML = html;
+}
+
+// ══════════════════════════════════════════
+// ANAGRAFICA
+// ══════════════════════════════════════════
+let anagPage = 0;
+const ANAG_PAGE_SIZE = 100;
+let filteredClients = [];
+
+function renderAnagrafica(){
+  const banner = document.getElementById('firstRunBanner');
+  if(banner) banner.style.display = clients.length === 0 ? 'block' : 'none';
+
+  const q = (document.getElementById('anagSearch').value||'').trim().toLowerCase();
+  filteredClients = q
+    ? clients.filter(c=>c.nome.toLowerCase().includes(q)||c.cod.includes(q))
+    : clients;
+
+  document.getElementById('anagCount').textContent = `${filteredClients.length.toLocaleString()} clienti`;
+
+  const page = filteredClients.slice(0, (anagPage+1)*ANAG_PAGE_SIZE);
+  document.getElementById('anagBody').innerHTML = page.map(c=>`
+    <tr>
+      <td style="font-family:var(--mono);font-size:12px;">${esc(c.cod)}</td>
+      <td>${esc(c.nome)}</td>
+      <td><button class="btn sm" onclick="removeClient('${esc(c.cod)}')">🗑</button></td>
+    </tr>
+  `).join('') + (filteredClients.length > page.length
+    ? `<tr><td colspan="3" style="text-align:center;padding:12px;">
+        <button class="btn" onclick="anagPage++;renderAnagrafica();">Mostra altri…</button>
+      </td></tr>`
+    : '');
+}
+
+function removeClient(cod){
+  if(!confirm('Eliminare questo cliente?')) return;
+  clients = clients.filter(c=>c.cod!==cod);
+  renderAnagrafica();
+  notifyChange();
+}
+
+document.getElementById('anagSearch').addEventListener('input', ()=>{ anagPage=0; renderAnagrafica(); });
+
+document.getElementById('btnAddClient').addEventListener('click', ()=>{
+  const cod = prompt('Codice cliente:'); if(!cod) return;
+  const nome = prompt('Ragione sociale:'); if(!nome) return;
+  if(clients.find(c=>c.cod===cod)){ alert('Codice già esistente.'); return; }
+  clients.push({cod:cod.trim(), nome:nome.trim().toUpperCase()});
+  clients.sort((a,b)=>a.nome.localeCompare(b.nome));
+  renderAnagrafica();
+  notifyChange();
+});
+
+// File upload handler
+document.getElementById('anagUpload').addEventListener('change', function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    let text = ev.target.result;
+    // Remove BOM if present (utf-8-sig)
+    if(text.charCodeAt(0)===0xFEFF) text = text.slice(1);
+    const lines = text.split(/\r?\n/).filter(l=>l.trim());
+    const parsed = [];
+    lines.forEach((line,i)=>{
+      // skip header row
+      const low = line.toLowerCase();
+      if(i===0 && (low.includes('codice')||low.includes('ragione')||low.includes('code')||low.includes('nome'))) return;
+      // split by ; , or tab
+      const parts = line.split(/[,;\t]/).map(s=>s.trim().replace(/^["']|["']$/g,''));
+      if(parts.length>=2 && parts[0] && parts[1]){
+        parsed.push({cod:parts[0], nome:parts[1].toUpperCase()});
+      }
+    });
+    if(parsed.length > 0){
+      if(confirm(`Trovati ${parsed.length} clienti. Caricare nell'anagrafica?`)){
+        clients = parsed;
+        renderAnagrafica();
+        notifyChange();
+        flashMsg(`✓ ${parsed.length} clienti caricati con successo!`);
+        // Switch to anagrafica tab to confirm
+      }
+    } else {
+      alert('Nessun cliente trovato.\n\nAssicurati che il file sia in formato CSV con separatore ";" e colonne:\nCODICE;RAGIONE SOCIALE');
+    }
+  };
+  reader.readAsText(file, 'utf-8');
+  e.target.value='';
+});
+
+function flashMsg(msg){
+  const el = document.createElement('div');
+  el.textContent = msg;
+  el.style.cssText='position:fixed;bottom:24px;right:24px;background:var(--green);color:#fff;padding:10px 18px;border-radius:6px;font-weight:600;z-index:9999;';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 2500);
+}
+
+// ══════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════
+document.querySelectorAll('.tab').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab==='produzione') renderProduzione();
+    if(btn.dataset.tab==='anagrafica') renderAnagrafica();
+  });
+});
+
+// PDF
+document.getElementById('btnExportPdf').addEventListener('click', ()=>window.print());
+
+// target change
+document.getElementById('targetTotal')?.addEventListener('input', ()=>{
+  renderGrid();
+  renderProduzione();
+});
+
+// Init date
+document.getElementById('sessionDate').value = todayStr();
+
+// ══════════════════════════════════════════
+// FIREBASE
+// ══════════════════════════════════════════
+function toFB(){
+  return JSON.parse(JSON.stringify({ orders, clients }));
+}
+
+function fromFB(data){
+  if(!data) return;
+  if(data.clients && Array.isArray(data.clients)) clients = data.clients;
+  if(data.orders) orders = data.orders;
+}
+
+try {
+  if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+
+  let isSaving = false;
+
+  notifyChange = ()=>{
+    if(isRemoteUpdate) return;
+    setSyncStatus('saving','Salvataggio…');
+    if(saveDebounce) clearTimeout(saveDebounce);
+    saveDebounce = setTimeout(()=>{
+      isSaving = true;
+      db.ref('ordini_siculabrioche/v1').set(toFB())
+        .then(()=>{ setSyncStatus('ok','Sincronizzato ✓'); isSaving=false; })
+        .catch(()=>{ setSyncStatus('err','Errore salvataggio'); isSaving=false; });
+    }, 1000);
+  };
+
+  db.ref('ordini_siculabrioche/v1').on('value', snap=>{
+    // ignore echo of our own saves
+    if(isSaving) return;
+
+    isRemoteUpdate = true;
+    fromFB(snap.val());
+    document.getElementById('loading').classList.remove('vis');
+    setSyncStatus('ok','Connesso ✓');
+
+    ensureSession();
+    renderGrid();
+    renderProduzione();
+    renderAnagrafica();
+    setTimeout(()=>{ isRemoteUpdate=false; }, 0);
+  }, ()=>{
+    document.getElementById('loading').classList.remove('vis');
+    setSyncStatus('err','Connessione fallita');
+    renderGrid();
+  });
+
+} catch(err) {
+  document.getElementById('loading').classList.remove('vis');
+  setSyncStatus('err','Firebase error');
+  renderGrid();
+}
+</script>
+</body>
+</html>
