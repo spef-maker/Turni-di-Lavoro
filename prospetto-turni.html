@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prospetto Turni Mensile</title>
+<style>
+  :root{
+    --ink:#1f2421;
+    --paper:#f7f5f1;
+    --line:#d8d3c8;
+    --line-strong:#b8b0a2;
+    --accent:#b5563c;
+    --lavora:#ffffff;
+    --riposo:#cfc9bd;
+    --riposo-strong:#9a9285;
+    --ferie:#e8cdb8;
+    --ferie-strong:#b5563c;
+    --ok:#7d9c70;
+    --warn:#b5563c;
+    --muted:#8a857c;
+    --white:#ffffff;
+    --radius:6px;
+    --font-display:'DM Serif Display', Georgia, serif;
+    --font-body:'Inter', -apple-system, sans-serif;
+    --font-mono:'IBM Plex Mono', monospace;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:var(--font-body);
+    color:var(--ink);
+    background:var(--paper);
+    font-size:13px;
+    line-height:1.45;
+  }
+
+  .app{
+    max-width:1400px;
+    margin:0 auto;
+    padding:28px 24px 60px;
+  }
+
+  header.top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    border-bottom:2px solid var(--ink);
+    padding-bottom:14px;
+    margin-bottom:24px;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  header.top h1{
+    font-family:var(--font-display);
+    font-size:30px;
+    margin:0;
+    font-weight:400;
+    letter-spacing:0.5px;
+  }
+  header.top .sub{
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:1.5px;
+  }
+
+  .month-nav{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    font-family:var(--font-mono);
+    flex-wrap:wrap;
+  }
+  .month-nav .label{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    color:var(--muted);
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .range-label{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-family:var(--font-mono);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    color:var(--muted);
+  }
+  .range-label input[type="date"]{
+    font-family:var(--font-body);
+    font-size:13px;
+    padding:6px 8px;
+    border:1px solid var(--line-strong);
+    border-radius:4px;
+    background:var(--white);
+    color:var(--ink);
+  }
+
+  .toolbar{
+    display:flex;
+    gap:8px;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .toolbar button{
+    border:1px solid var(--line-strong);
+    background:var(--white);
+    color:var(--ink);
+    padding:8px 14px;
+    border-radius:4px;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .toolbar button:hover{background:var(--ink);color:var(--white);}
+  .toolbar button.primary{background:var(--ink);color:var(--white);border-color:var(--ink);}
+  .toolbar button.primary:hover{background:var(--accent);border-color:var(--accent);}
+  .toolbar .file-label{
+    display:inline-block;
+    border:1px solid var(--line-strong);
+    background:var(--white);
+    color:var(--ink);
+    padding:8px 14px;
+    border-radius:4px;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    font-family:var(--font-body);
+  }
+  .toolbar .file-label:hover{background:var(--ink);color:var(--white);}
+  .toolbar #importFile{
+    position:absolute;
+    width:1px;
+    height:1px;
+    padding:0;
+    margin:0;
+    overflow:hidden;
+    clip:rect(0,0,0,0);
+    white-space:nowrap;
+    border:0;
+  }
+  .status-msg{
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--accent);
+    margin-left:auto;
+  }
+
+  /* DEPARTMENT BLOCK */
+  .dept-block{
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    margin-bottom:28px;
+    overflow:hidden;
+  }
+  .dept-header{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:12px 16px;
+    background:var(--ink);
+    color:var(--white);
+  }
+  .dept-header input.dept-name{
+    font-family:var(--font-display);
+    font-size:18px;
+    background:transparent;
+    border:none;
+    color:var(--white);
+    flex:1;
+    padding:2px 4px;
+    border-radius:3px;
+  }
+  .dept-header input.dept-name:focus{outline:1px solid var(--white);}
+  .dept-header button{
+    background:transparent;
+    border:1px solid rgba(255,255,255,0.35);
+    color:var(--white);
+    padding:5px 10px;
+    border-radius:4px;
+    font-size:11px;
+    font-family:var(--font-mono);
+    text-transform:uppercase;
+    letter-spacing:1px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .dept-header button:hover{background:var(--accent);border-color:var(--accent);}
+  .dept-header button.del-dept{
+    border-color:rgba(255,255,255,0.2);
+  }
+  .dept-header button.del-dept:hover{background:#a1392a;border-color:#a1392a;}
+
+  .grid-wrap{overflow-x:auto;}
+  table.roster{
+    border-collapse:collapse;
+    width:100%;
+    min-width:900px;
+  }
+  table.roster th, table.roster td{
+    border:1px solid var(--line);
+    padding:0;
+    text-align:center;
+  }
+  table.roster th{
+    font-family:var(--font-mono);
+    font-size:10px;
+    text-transform:uppercase;
+    color:var(--muted);
+    padding:6px 4px;
+    background:var(--paper);
+    line-height:1.3;
+    white-space:nowrap;
+  }
+  table.roster th.daynum{
+    font-size:12px;
+    font-weight:700;
+    color:var(--ink);
+  }
+  th.weekend, td.weekend{background:#f0ebe2;}
+
+  .name-cell{
+    padding:0 !important;
+    text-align:left !important;
+    position:sticky;
+    left:0;
+    background:var(--white);
+    z-index:2;
+    min-width:170px;
+  }
+  .name-cell input.emp-name{
+    width:100%;
+    border:none;
+    background:transparent;
+    padding:8px 10px 2px;
+    font-size:13px;
+    font-weight:600;
+    font-family:var(--font-body);
+    color:var(--ink);
+  }
+  .name-cell input.emp-name:focus{outline:2px solid var(--accent);outline-offset:-2px;}
+  .name-cell input.emp-name{padding-right:24px;}
+
+  .emp-dates{
+    display:flex;
+    gap:8px;
+    padding:0 10px 8px;
+    font-family:var(--font-mono);
+    font-size:10px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+  }
+  .emp-dates label{
+    display:flex;
+    align-items:center;
+    gap:4px;
+  }
+  .emp-dates input[type="date"]{
+    font-family:var(--font-body);
+    font-size:11px;
+    padding:2px 4px;
+    border:1px solid var(--line);
+    border-radius:3px;
+    background:var(--paper);
+    color:var(--ink);
+    max-width:108px;
+  }
+  .name-cell .del-row{
+    position:absolute;
+    right:2px;
+    top:50%;
+    transform:translateY(-50%);
+    border:none;
+    background:transparent;
+    color:var(--muted);
+    cursor:pointer;
+    font-size:15px;
+    line-height:1;
+    padding:2px 5px;
+    display:none;
+  }
+  .name-cell{position:relative;}
+  .name-cell:hover .del-row{display:block;}
+  .name-cell:hover .del-row:hover{color:var(--accent);}
+
+  td.daycell{
+    width:34px;
+    height:30px;
+    cursor:pointer;
+    background:var(--lavora);
+    transition:background .1s;
+    user-select:none;
+  }
+  td.daycell.riposo{
+    background:var(--riposo);
+  }
+  td.daycell:hover{
+    box-shadow:inset 0 0 0 2px var(--accent);
+  }
+  td.daycell.riposo::after{
+    content:'R';
+    font-family:var(--font-mono);
+    font-size:10px;
+    color:var(--riposo-strong);
+    font-weight:700;
+  }
+  td.daycell.ferie{
+    background:var(--ferie);
+  }
+  td.daycell.ferie::after{
+    content:'F';
+    font-family:var(--font-mono);
+    font-size:10px;
+    color:var(--ferie-strong);
+    font-weight:700;
+  }
+  td.daycell.inactive{
+    background:repeating-linear-gradient(135deg, #ece8e1 0px, #ece8e1 4px, #e2ddd3 4px, #e2ddd3 8px);
+    cursor:default;
+  }
+  td.daycell.inactive:hover{
+    box-shadow:none;
+  }
+
+  .dept-settings{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 16px;
+    background:var(--paper);
+    border-bottom:1px solid var(--line);
+    flex-wrap:wrap;
+    font-size:12px;
+  }
+  .dept-settings label{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    color:var(--muted);
+  }
+  .dept-settings input[type="number"]{
+    width:50px;
+    padding:5px 6px;
+    border:1px solid var(--line-strong);
+    border-radius:4px;
+    background:var(--white);
+    font-family:var(--font-body);
+    font-size:12px;
+  }
+  .dept-settings .checkbox-label{
+    cursor:pointer;
+  }
+  .dept-settings .checkbox-label input[type="checkbox"]{
+    width:14px;
+    height:14px;
+    cursor:pointer;
+  }
+  .dept-settings .mode-hint{
+    font-family:var(--font-mono);
+    font-size:10px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:1px;
+  }
+  .dept-settings button.generate{
+    margin-left:auto;
+    border:1px solid var(--ink);
+    background:var(--ink);
+    color:var(--white);
+    padding:6px 14px;
+    border-radius:4px;
+    font-size:12px;
+    font-weight:600;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .dept-settings button.generate:hover{background:var(--accent);border-color:var(--accent);}
+
+  .coverage-report{
+    padding:10px 16px;
+    border-top:1px solid var(--line);
+    font-size:12px;
+    background:var(--white);
+  }
+  .coverage-report .ok-msg{color:var(--ok);font-weight:600;}
+  .coverage-report .warn-msg{color:var(--warn);font-weight:600;}
+  .coverage-report ul{
+    margin:6px 0 0;
+    padding-left:18px;
+  }
+  .coverage-report li{margin-bottom:2px;}
+
+  .add-row-cell{
+    padding:8px !important;
+  }
+  .add-row-btn{
+    width:100%;
+    border:1px dashed var(--line-strong);
+    background:transparent;
+    color:var(--muted);
+    padding:6px;
+    border-radius:4px;
+    font-size:12px;
+    cursor:pointer;
+    font-family:var(--font-body);
+  }
+  .add-row-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+  .add-dept-wrap{
+    text-align:center;
+    margin-top:8px;
+  }
+  .add-dept-wrap button{
+    border:1px dashed var(--line-strong);
+    background:transparent;
+    color:var(--muted);
+    padding:10px 20px;
+    border-radius:var(--radius);
+    font-size:13px;
+    cursor:pointer;
+    font-family:var(--font-body);
+    width:100%;
+  }
+  .add-dept-wrap button:hover{border-color:var(--accent);color:var(--accent);}
+
+  .legend{
+    display:flex;
+    gap:18px;
+    margin-bottom:18px;
+    font-size:12px;
+    color:var(--muted);
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .legend .item{display:flex;align-items:center;gap:6px;}
+  .legend .swatch{width:16px;height:16px;border-radius:3px;border:1px solid var(--line-strong);}
+  .legend .swatch.lavora{background:var(--lavora);}
+  .legend .swatch.riposo{background:var(--riposo);}
+  .legend .swatch.ferie{background:var(--ferie);}
+  .legend .hint{font-family:var(--font-mono);font-size:11px;}
+
+  footer.foot{
+    margin-top:10px;
+    text-align:center;
+    font-family:var(--font-mono);
+    font-size:10px;
+    color:var(--muted);
+    letter-spacing:1px;
+    text-transform:uppercase;
+  }
+
+  .empty-state{
+    text-align:center;
+    color:var(--muted);
+    font-style:italic;
+    padding:40px 20px;
+  }
+
+  @media print{
+    body{ background:var(--white); font-size:10px; }
+    .app{ max-width:none; padding:8px; }
+    .toolbar, .legend, footer.foot, .add-row-btn, .add-dept-wrap,
+    .name-cell .del-row, .dept-header button, .min-coverage,
+    .dept-settings button.generate{
+      display:none !important;
+    }
+    .month-nav input[type="date"]{
+      border:none;
+      background:transparent;
+      padding:0;
+    }
+    .dept-block{
+      page-break-inside:avoid;
+      border:1px solid #999;
+      margin-bottom:14px;
+    }
+    .dept-header{
+      background:#eee !important;
+      color:var(--ink) !important;
+    }
+    .dept-header input.dept-name{
+      color:var(--ink) !important;
+      font-weight:700;
+    }
+    .dept-settings{
+      background:#fff;
+    }
+    td.daycell.riposo{ background:#ddd !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    td.daycell.ferie{ background:#f0e0cc !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    td.daycell.inactive{ background:#eee !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    th.weekend, td.weekend{ background:#f5f5f5 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .emp-dates input[type="date"]{
+      border:none;
+      background:transparent;
+      padding:0;
+    }
+    .grid-wrap{ overflow:visible; }
+    table.roster{ font-size:9px; }
+  }
+
+  /* Sync status */
+  .sync-status{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--muted);
+    margin-left:auto;
+  }
+  .sync-dot{
+    width:8px;height:8px;
+    border-radius:50%;
+    background:var(--muted);
+    flex-shrink:0;
+    transition:background .4s;
+  }
+  .sync-dot.connected{background:#7d9c70;}
+  .sync-dot.saving{background:#e8a838;}
+  .sync-dot.error{background:#b5563c;}
+
+  /* Loading overlay */
+  .loading-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(247,245,241,.85);
+    z-index:9999;
+    align-items:center;
+    justify-content:center;
+  }
+  .loading-overlay.visible{display:flex;}
+  .loading-box{
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:32px 40px;
+    text-align:center;
+    font-family:var(--font-body);
+    font-size:14px;
+    color:var(--muted);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:16px;
+  }
+  .loading-spinner{
+    width:32px;height:32px;
+    border:3px solid var(--line);
+    border-top-color:var(--accent);
+    border-radius:50%;
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+</style>
+<!-- Firebase SDK -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js"></script>
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <div>
+      <h1>Prospetto Turni Mensile</h1>
+      <div class="sub">Reparti · personale · giorni di riposo</div>
+    </div>
+    <div class="month-nav">
+      <label class="range-label">Dal
+        <input type="date" id="periodStart">
+      </label>
+      <label class="range-label">Al
+        <input type="date" id="periodEnd">
+      </label>
+      <div class="label" id="monthLabel"></div>
+    </div>
+  </header>
+
+  <div class="legend">
+    <div class="item"><span class="swatch lavora"></span> Lavora</div>
+    <div class="item"><span class="swatch riposo"></span> Riposo</div>
+    <div class="item"><span class="swatch ferie"></span> Ferie</div>
+    <div class="hint">Clicca su una cella: Lavora → Riposo → Ferie → Lavora</div>
+  </div>
+
+  <div class="toolbar">
+    <button id="shareBtn">🔗 Condividi link</button>
+    <button id="exportPdfBtn">Esporta PDF</button>
+    <button id="exportBtn">Esporta dati (JSON)</button>
+    <label for="importFile" class="file-label">Importa dati (JSON)</label>
+    <input type="file" id="importFile" accept="application/json,.json">
+    <button id="addDeptTop" class="primary">+ Nuovo reparto</button>
+    <div class="sync-status" id="syncStatus">
+      <span class="sync-dot" id="syncDot"></span>
+      <span id="syncMsg">Connessione...</span>
+    </div>
+    <div class="status-msg" id="statusMsg"></div>
+  </div>
+
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-box">
+      <div class="loading-spinner"></div>
+      <div>Caricamento dati in corso…</div>
+    </div>
+  </div>
+  <div id="departments"></div>
+
+  <footer class="foot">I dati sono mantenuti nella sessione del browser corrente — esporta per conservarli o condividerli</footer>
+</div>
+
+<script>
+// =============================================================
+// CONFIGURAZIONE FIREBASE — SOSTITUISCI CON I TUOI DATI
+// Trovi questi valori in: Firebase Console → Impostazioni progetto
+// → Le tue app → (la tua web app) → SDK setup and configuration
+// =============================================================
+const firebaseConfig = {
+  apiKey:            "AIzaSyB08NmunQbwid4W4bZIBdAE3Kd-0P5Mih8",
+  authDomain:        "turni-lavoro-543c6.firebaseapp.com",
+  databaseURL:       "https://turni-lavoro-543c6-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:         "turni-lavoro-543c6",
+  storageBucket:     "turni-lavoro-543c6.firebasestorage.app",
+  messagingSenderId: "360806251809",
+  appId:             "1:360806251809:web:e75e583630d2d9d14b1260",
+  measurementId:     "G-DPTE4SKJ74"
+};
+// =============================================================
+(function(){
+  const DAY_NAMES = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+  const MONTH_NAMES = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+
+  function makeEmployee(name){
+    return {id: uid(), name: name, status: {}, hireDate: '', endDate: ''};
+  }
+
+  let state = {
+    departments: [
+      {
+        id: uid(),
+        name: 'Impastatrice e Confezionato',
+        maxRestPerDay: 1,
+        avoidMonday: true,
+        employees: [
+          'Francesco Librio','Angelo','Anthony','Tony'
+        ].map(makeEmployee)
+      },
+      {
+        id: uid(),
+        name: 'Produzione',
+        maxRestPerDay: 4,
+        avoidMonday: false,
+        employees: [
+          'Veronica','Basile','Giulia','Salvo','Cristina','Martina R',
+          'Grazia','Samuele','Giovanni','Martina','Aliso','Incognito',
+          'Giuseppe','Sonia','Mara','Erika','Sorella Ciccio','Alessandra',
+          'Rotweiler','Alfio','Graziella','Muscolino','Federica','Nicole'
+        ].map(makeEmployee)
+      },
+      {
+        id: uid(),
+        name: 'Notte',
+        maxRestPerDay: 1,
+        avoidMonday: true,
+        employees: [
+          'Islam','Marcello','Attilio','Domenico','Azad','Peppe'
+        ].map(makeEmployee)
+      },
+      {
+        id: uid(),
+        name: 'Confezionato',
+        maxRestPerDay: 1,
+        avoidMonday: true,
+        employees: [
+          'Stella','Orazio','Kiki','Giuliano','Stefano','Piero','Michela'
+        ].map(makeEmployee)
+      }
+    ]
+  };
+
+  // periodo di pianificazione di default: 22 giugno - 26 luglio 2026
+  // (estende il 22/07 fino alla domenica successiva, per avere solo settimane complete da 7 giorni)
+  let periodStart = new Date(2026, 5, 22);
+  let periodEnd = new Date(2026, 6, 26);
+
+  function uid(){
+    return 'id_' + Math.random().toString(36).slice(2,10);
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c=>({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    })[c]);
+  }
+
+  let flashTimer = null;
+  function flashStatus(msg){
+    const el = document.getElementById('statusMsg');
+    el.textContent = msg;
+    if(flashTimer) clearTimeout(flashTimer);
+    flashTimer = setTimeout(()=>{ el.textContent=''; }, 1500);
+  }
+
+  function fmtDate(y,m,d){
+    const mm = String(m+1).padStart(2,'0');
+    const dd = String(d).padStart(2,'0');
+    return `${y}-${mm}-${dd}`;
+  }
+
+  function dateToStr(d){
+    return fmtDate(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+
+  // parsa una stringa "YYYY-MM-DD" come data locale (evita problemi di fuso orario di new Date(str))
+  function parseDateStr(dateStr){
+    const [y,m,d] = dateStr.split('-').map(Number);
+    return new Date(y, m-1, d);
+  }
+
+  // restituisce l'elenco di date "YYYY-MM-DD" dal periodStart al periodEnd inclusi
+  function getPeriodDates(){
+    const dates = [];
+    if(!periodStart || !periodEnd) return dates;
+    const cur = new Date(periodStart);
+    cur.setHours(0,0,0,0);
+    const end = new Date(periodEnd);
+    end.setHours(0,0,0,0);
+    if(cur > end) return dates;
+    while(cur <= end){
+      dates.push(dateToStr(cur));
+      cur.setDate(cur.getDate()+1);
+    }
+    return dates;
+  }
+
+  // un dipendente è "attivo" in una data se la data è compresa tra hireDate (se impostata)
+  // ed endDate (se impostata), inclusi entrambi gli estremi
+  function isEmployeeActive(emp, dateStr){
+    if(emp.hireDate && dateStr < emp.hireDate) return false;
+    if(emp.endDate && dateStr > emp.endDate) return false;
+    return true;
+  }
+
+  // ---------- Department / employee management ----------
+  function addDepartment(){
+    state.departments.push({
+      id: uid(),
+      name: 'Nuovo reparto',
+      maxRestPerDay: 1,
+      avoidMonday: true,
+      employees: [{id: uid(), name: '', status: {}, hireDate: '', endDate: ''}]
+    });
+    render();
+  }
+
+  function removeDepartment(deptId){
+    if(!confirm('Eliminare questo reparto e tutti i suoi dati?')) return;
+    state.departments = state.departments.filter(d=>d.id!==deptId);
+    render();
+  }
+
+  function renameDepartment(deptId, name){
+    const dept = state.departments.find(d=>d.id===deptId);
+    if(dept) dept.name = name;
+  }
+
+  function addEmployee(deptId){
+    const dept = state.departments.find(d=>d.id===deptId);
+    if(dept){
+      dept.employees.push({id: uid(), name: '', status: {}, hireDate: '', endDate: ''});
+      render();
+    }
+  }
+
+  function removeEmployee(deptId, empId){
+    const dept = state.departments.find(d=>d.id===deptId);
+    if(dept){
+      dept.employees = dept.employees.filter(e=>e.id!==empId);
+      render();
+    }
+  }
+
+  function renameEmployee(deptId, empId, name){
+    const dept = state.departments.find(d=>d.id===deptId);
+    if(!dept) return;
+    const emp = dept.employees.find(e=>e.id===empId);
+    if(emp) emp.name = name;
+  }
+
+  function setEmployeeHireDate(deptId, empId, value){
+    const dept = state.departments.find(d=>d.id===deptId);
+    if(!dept) return;
+    const emp = dept.employees.find(e=>e.id===empId);
+    if(emp) emp.hireDate = value || '';
+  }
+
+  function setEmployeeEndDate(deptId, empId, value){
+    const dept = state.departments.find(d=>d.id===deptId);
+    if(!dept) return;
+    const emp = dept.employees.find(e=>e.id===empId);
+    if(emp) emp.endDate = value || '';
+  }
+
+  // Ciclo: lavora -> riposo -> ferie -> lavora
+  function cycleStatus(deptId, empId, dateStr){
+    const dept = state.departments.find(d=>d.id===deptId);
+    if(!dept) return null;
+    const emp = dept.employees.find(e=>e.id===empId);
+    if(!emp) return null;
+    if(!isEmployeeActive(emp, dateStr)) return undefined; // fuori contratto, nessuna modifica
+    const current = emp.status[dateStr];
+    let next;
+    if(!current){
+      next = 'riposo';
+    }else if(current==='riposo'){
+      next = 'ferie';
+    }else{
+      next = null;
+    }
+    if(next){
+      emp.status[dateStr] = next;
+    }else{
+      delete emp.status[dateStr];
+    }
+    return next;
+  }
+
+  function setMaxRestPerDay(deptId, value){
+    const dept = state.departments.find(d=>d.id===deptId);
+    if(!dept) return;
+    const n = parseInt(value, 10);
+    dept.maxRestPerDay = (isNaN(n) || n<0) ? 0 : n;
+  }
+
+  function setAvoidMonday(deptId, value){
+    const dept = state.departments.find(d=>d.id===deptId);
+    if(!dept) return;
+    dept.avoidMonday = !!value;
+  }
+
+  // ---------- Auto-generation of rest days ----------
+  // Regole:
+  // - ogni dipendente riceve 1 giorno di riposo per ogni settimana del periodo in cui lavora
+  //   (esclusi i giorni di ferie e i giorni fuori dal periodo contrattuale)
+  // - i giorni di ferie restano fissi (non vengono toccati) e non generano riposo aggiuntivo
+  // - i giorni fuori contratto (prima dell'assunzione o dopo la fine contratto) sono trattati
+  //   come assenza: il dipendente non riceve riposo quel giorno e non conta nel conteggio
+  // - in nessun giorno il numero di riposi nel reparto può superare "maxRestPerDay" (vincolo rigido)
+  // - per ogni dipendente si evita di avere due riposi in giorni consecutivi (anche a cavallo
+  //   tra una settimana e l'altra)
+  // - se "avoidMonday" è attivo per il reparto, il lunedì viene evitato come giorno di riposo
+  //   quando possibile (preferenza, non vincolo rigido); se disattivato il lunedì è un giorno
+  //   come gli altri
+  // - eventuali riposi assegnati manualmente in precedenza vengono azzerati e ricalcolati (le ferie NO)
+  function generateRestDays(deptId){
+    const dept = state.departments.find(d=>d.id===deptId);
+    if(!dept) return null;
+    if(typeof dept.maxRestPerDay !== 'number') dept.maxRestPerDay = 1;
+    if(typeof dept.avoidMonday !== 'boolean') dept.avoidMonday = true;
+
+    const dates = getPeriodDates();
+    if(dates.length===0) return {critical:[], totalEmployees: dept.employees.length};
+
+    // raggruppa le date in settimane (Lun-Dom), incluse settimane parziali a inizio/fine periodo
+    const weeks = [];
+    let currentWeek = [];
+    dates.forEach(dateStr=>{
+      const dow = parseDateStr(dateStr).getDay(); // 0=Dom..6=Sab
+      const mondayIndex = (dow===0) ? 6 : dow-1; // Lun=0..Dom=6
+      if(currentWeek.length>0 && mondayIndex===0){
+        weeks.push(currentWeek);
+        currentWeek = [];
+      }
+      currentWeek.push(dateStr);
+    });
+    if(currentWeek.length>0) weeks.push(currentWeek);
+
+    // pulisci i riposi precedenti, mantieni le ferie
+    dept.employees.forEach(emp=>{
+      Object.keys(emp.status).forEach(dateStr=>{
+        if(emp.status[dateStr]==='riposo') delete emp.status[dateStr];
+      });
+    });
+
+    const issues = [];
+
+    // un dipendente "conta" per un giorno se è attivo (in contratto) quel giorno e non è in ferie
+    function countsOnDay(emp, dateStr){
+      return isEmployeeActive(emp, dateStr) && emp.status[dateStr] !== 'ferie';
+    }
+
+    // giorno successivo/precedente come stringa "YYYY-MM-DD"
+    function adjacentDate(dateStr, delta){
+      const d = parseDateStr(dateStr);
+      d.setDate(d.getDate()+delta);
+      return dateToStr(d);
+    }
+
+    function isMonday(dateStr){
+      return parseDateStr(dateStr).getDay()===1;
+    }
+
+    // ultimo giorno di riposo assegnato per ciascun dipendente (per controllo adiacenza tra settimane)
+    const lastRestDate = {};
+
+    weeks.forEach(weekDates=>{
+      // dipendenti che lavorano almeno un giorno questa settimana (attivi e non in ferie tutta la settimana)
+      const eligibleEmployees = dept.employees.filter(emp=>{
+        return weekDates.some(d=> countsOnDay(emp, d));
+      });
+
+      if(eligibleEmployees.length===0) return;
+
+      // contatore riposi già assegnati per giorno in questa settimana
+      const restCount = {};
+      weekDates.forEach(d=> restCount[d]=0);
+
+      // rotazione: punto di partenza diverso per settimana per distribuire equamente nel periodo
+      const weekIndex = weeks.indexOf(weekDates);
+      let startOffset = weekIndex % weekDates.length;
+
+      eligibleEmployees.forEach((emp, idx)=>{
+        // giorni candidati per questo dipendente: deve essere attivo e lavorare quel giorno (non ferie)
+        let candidates = weekDates.filter(d=> countsOnDay(emp, d));
+        if(candidates.length===0) return;
+
+        // escludi i giorni adiacenti all'ultimo riposo assegnato (no due riposi consecutivi)
+        const prevRest = lastRestDate[emp.id];
+        const nonAdjacent = candidates.filter(d=>{
+          if(!prevRest) return true;
+          return d !== adjacentDate(prevRest, 1) && d !== adjacentDate(prevRest, -1) && d !== prevRest;
+        });
+        const pool0 = nonAdjacent.length>0 ? nonAdjacent : candidates;
+
+        // rispetta il tetto massimo di riposi/giorno: tieni solo i giorni con slot disponibili
+        const withinCap = pool0.filter(d=> restCount[d] < dept.maxRestPerDay);
+        const pool = withinCap.length>0 ? withinCap : pool0;
+
+        // punteggio: slot rimanenti nel giorno (più alto è meglio), con eventuale malus lunedì
+        const MONDAY_PENALTY = 1000;
+        const scored = pool.map(d=>{
+          const remaining = dept.maxRestPerDay - restCount[d];
+          const score = remaining - (dept.avoidMonday && isMonday(d) ? MONDAY_PENALTY : 0);
+          return {d, remaining, score};
+        });
+
+        // preferenza di rotazione: ruota l'ordine dei giorni candidati
+        const rotated = [];
+        const n = pool.length;
+        for(let i=0;i<n;i++){
+          rotated.push(pool[(idx + startOffset + i) % n]);
+        }
+
+        // scegli il primo giorno (in ordine di rotazione) con slot disponibili e che non sia lunedì
+        // (se avoidMonday è attivo per il reparto)
+        let chosen = null;
+        for(const d of rotated){
+          const sc = scored.find(s=>s.d===d);
+          if(sc.remaining > 0 && !(dept.avoidMonday && isMonday(d))){ chosen = d; break; }
+        }
+        // se nessuno soddisfa slot-disponibili e non-lunedì, accetta slot disponibili anche di lunedì
+        if(!chosen){
+          for(const d of rotated){
+            const sc = scored.find(s=>s.d===d);
+            if(sc.remaining > 0){ chosen = d; break; }
+          }
+        }
+        // come ultima risorsa, scegli il punteggio più alto (supera il tetto massimo: segnala criticità)
+        if(!chosen){
+          let best = scored[0];
+          rotated.forEach(d=>{
+            const sc = scored.find(s=>s.d===d);
+            if(sc.score > best.score) best = sc;
+          });
+          chosen = best.d;
+          if(best.remaining <= 0){
+            issues.push({week: weekIndex+1, date: chosen, reason: 'max-riposi-superato'});
+          }
+        }
+
+        emp.status[chosen] = 'riposo';
+        restCount[chosen]++;
+        lastRestDate[emp.id] = chosen;
+      });
+    });
+
+    return buildCoverageReport(dept, weeks, issues);
+  }
+
+  function buildCoverageReport(dept, weeks, issues){
+    const dates = getPeriodDates();
+
+    const critical = [];
+    dates.forEach(dateStr=>{
+      const restCount = dept.employees.filter(emp=> {
+        return isEmployeeActive(emp, dateStr) && emp.status[dateStr]==='riposo';
+      }).length;
+      if(restCount > dept.maxRestPerDay){
+        critical.push({date: dateStr, present: restCount, required: dept.maxRestPerDay});
+      }
+    });
+
+    return {critical, totalEmployees: dept.employees.length};
+  }
+
+  // ---------- Export / Import ----------
+  function exportState(){
+    const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'prospetto-turni.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    flashStatus('File esportato');
+  }
+
+  function importState(file){
+    const reader = new FileReader();
+    reader.onload = e=>{
+      try{
+        const parsed = JSON.parse(e.target.result);
+        if(parsed && Array.isArray(parsed.departments)){
+          state = normalizeState(parsed);
+          render();
+          flashStatus('File importato');
+        }else{
+          flashStatus('File non valido');
+        }
+      }catch(err){
+        flashStatus('Errore nella lettura del file');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // garantisce che ogni reparto/dipendente abbia i campi richiesti dalla versione corrente
+  // (utile per importare file salvati con versioni precedenti dell'app)
+  function normalizeState(s){
+    s.departments.forEach(dept=>{
+      if(typeof dept.maxRestPerDay !== 'number'){
+        // migrazione da versioni precedenti basate su minCoverage
+        dept.maxRestPerDay = 1;
+      }
+      if(typeof dept.avoidMonday !== 'boolean') dept.avoidMonday = true;
+      delete dept.minCoverage;
+      (dept.employees||[]).forEach(emp=>{
+        if(!emp.status) emp.status = emp.rest ? emp.rest : {};
+        if(emp.hireDate === undefined) emp.hireDate = '';
+        if(emp.endDate === undefined) emp.endDate = '';
+      });
+    });
+    return s;
+  }
+
+  // ---------- Render ----------
+  // Hook per la sincronizzazione (viene sovrascritta da Firebase se configurato)
+  let notifyChange = function(){};
+
+  function render(){
+    const dates = getPeriodDates();
+    if(dates.length>0){
+      const weeks = Math.ceil(dates.length/7);
+      document.getElementById('monthLabel').textContent = `${dates.length} giorni · ~${weeks} settimane`;
+    }else{
+      document.getElementById('monthLabel').textContent = 'Periodo non valido';
+    }
+
+    const container = document.getElementById('departments');
+
+    if(state.departments.length===0){
+      container.innerHTML = '<div class="empty-state">Nessun reparto. Aggiungi un reparto per iniziare.</div>';
+      notifyChange();
+      return;
+    }
+
+    if(dates.length===0){
+      container.innerHTML = '<div class="empty-state">Imposta una data di inizio e una data di fine valide (inizio ≤ fine) per visualizzare il prospetto.</div>';
+      notifyChange();
+      return;
+    }
+
+    let html = '';
+    state.departments.forEach(dept=>{
+      html += renderDept(dept, dates);
+    });
+    container.innerHTML = html;
+
+    attachListeners();
+    notifyChange();
+  }
+
+  function renderDept(dept, dates){
+    if(typeof dept.maxRestPerDay !== 'number') dept.maxRestPerDay = 1;
+    if(typeof dept.avoidMonday !== 'boolean') dept.avoidMonday = true;
+
+    let html = `<div class="dept-block" data-dept="${dept.id}">`;
+    html += `<div class="dept-header">`;
+    html += `<input type="text" class="dept-name" value="${escapeHtml(dept.name)}" maxlength="40">`;
+    html += `<button class="add-emp-btn">+ Dipendente</button>`;
+    html += `<button class="del-dept">Elimina reparto</button>`;
+    html += `</div>`;
+
+    html += `<div class="dept-settings">`;
+    html += `<label>Massimo riposi al giorno: <input type="number" class="max-rest" min="0" max="${dept.employees.length}" value="${dept.maxRestPerDay}"></label>`;
+    html += `<label class="checkbox-label"><input type="checkbox" class="avoid-monday" ${dept.avoidMonday?'checked':''}> Evita il lunedì come riposo</label>`;
+    html += `<span class="mode-hint">1 riposo/settimana · no riposi consecutivi · ferie/fuori contratto esclusi</span>`;
+    html += `<button class="generate">Genera riposi del periodo</button>`;
+    html += `</div>`;
+
+    html += `<div class="grid-wrap"><table class="roster">`;
+    html += `<thead><tr><th class="name-cell" style="position:sticky;left:0;z-index:3;background:var(--paper);">Dipendente / Contratto</th>`;
+    dates.forEach(dateStr=>{
+      const d = parseDateStr(dateStr);
+      const dow = d.getDay();
+      const isWeekend = (dow===0 || dow===6);
+      html += `<th class="${isWeekend?'weekend':''} daynum">${d.getDate()}<br>${DAY_NAMES[dow]}</th>`;
+    });
+    html += `</tr></thead><tbody>`;
+
+    dept.employees.forEach(emp=>{
+      html += `<tr data-emp="${emp.id}">`;
+      html += `<td class="name-cell">`;
+      html += `<input type="text" class="emp-name" value="${escapeHtml(emp.name)}" placeholder="Nome dipendente" maxlength="30">`;
+      html += `<div class="emp-dates">`;
+      html += `<label>Da <input type="date" class="emp-hire" value="${emp.hireDate||''}"></label>`;
+      html += `<label>A <input type="date" class="emp-end" value="${emp.endDate||''}"></label>`;
+      html += `</div>`;
+      html += `<button class="del-row" title="Rimuovi dipendente">×</button>`;
+      html += `</td>`;
+      dates.forEach(dateStr=>{
+        const d = parseDateStr(dateStr);
+        const dow = d.getDay();
+        const isWeekend = (dow===0 || dow===6);
+        const active = isEmployeeActive(emp, dateStr);
+        if(!active){
+          html += `<td class="daycell inactive ${isWeekend?'weekend':''}" data-date="${dateStr}"></td>`;
+        }else{
+          const st = emp.status[dateStr];
+          const stClass = st ? st : '';
+          html += `<td class="daycell ${stClass} ${isWeekend?'weekend':''}" data-date="${dateStr}"></td>`;
+        }
+      });
+      html += `</tr>`;
+    });
+
+    html += `</tbody></table></div>`;
+
+    html += `<div class="coverage-report" data-report></div>`;
+
+    html += `</div>`;
+    return html;
+  }
+
+  function formatDateShort(dateStr){
+    const d = parseDateStr(dateStr);
+    const dow = DAY_NAMES[d.getDay()];
+    return `${dow} ${d.getDate()}/${d.getMonth()+1}`;
+  }
+
+  function renderCoverageReport(block, report){
+    const el = block.querySelector('[data-report]');
+    if(!report){
+      el.innerHTML = '';
+      return;
+    }
+    if(report.critical.length===0){
+      el.innerHTML = `<span class="ok-msg">✓ Massimo riposi/giorno rispettato per tutti i giorni del periodo.</span>`;
+    }else{
+      let html = `<span class="warn-msg">⚠ Limite massimo riposi superato in ${report.critical.length} giorno/i:</span><ul>`;
+      report.critical.forEach(c=>{
+        html += `<li>${formatDateShort(c.date)}: ${c.present} riposi su massimo ${c.required} consentiti</li>`;
+      });
+      html += `</ul><span style="color:var(--muted);">Riduci i riposi assegnati manualmente in quei giorni, o aumenta il limite massimo per il reparto.</span>`;
+      el.innerHTML = html;
+    }
+  }
+
+  function attachListeners(){
+    document.querySelectorAll('.dept-block').forEach(block=>{
+      attachListenersForBlock(block);
+    });
+  }
+
+  // helper: rigenera l'intero blocco DOM di un reparto dopo un'azione che modifica i riposi
+  function renderForDept(block, dept){
+    const dates = getPeriodDates();
+    const newHtml = renderDept(dept, dates);
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = newHtml;
+    const newBlock = wrapper.firstElementChild;
+    block.replaceWith(newBlock);
+    attachListenersForBlock(newBlock);
+    notifyChange();
+  }
+
+  // riattacca i listener a un singolo blocco reparto (usato dopo renderForDept)
+  function attachListenersForBlock(block){
+    const deptId = block.dataset.dept;
+    const dept = state.departments.find(d=>d.id===deptId);
+
+    block.querySelector('.dept-name').addEventListener('change', e=>{
+      renameDepartment(deptId, e.target.value.trim() || 'Reparto');
+      render();
+    });
+
+    block.querySelector('.add-emp-btn').addEventListener('click', ()=>{
+      addEmployee(deptId);
+    });
+
+    block.querySelector('.del-dept').addEventListener('click', ()=>{
+      removeDepartment(deptId);
+    });
+
+    block.querySelector('.max-rest').addEventListener('change', e=>{
+      setMaxRestPerDay(deptId, e.target.value);
+      renderForDept(block, dept);
+    });
+
+    block.querySelector('.avoid-monday').addEventListener('change', e=>{
+      setAvoidMonday(deptId, e.target.checked);
+    });
+
+    block.querySelector('.generate').addEventListener('click', ()=>{
+      generateRestDays(deptId);
+      renderForDept(block, dept);
+    });
+
+    block.querySelectorAll('tr[data-emp]').forEach(row=>{
+      const empId = row.dataset.emp;
+
+      const nameInput = row.querySelector('.emp-name');
+      nameInput.addEventListener('change', e=>{
+        renameEmployee(deptId, empId, e.target.value);
+      });
+
+      const hireInput = row.querySelector('.emp-hire');
+      hireInput.addEventListener('change', e=>{
+        setEmployeeHireDate(deptId, empId, e.target.value);
+        renderForDept(block, dept);
+      });
+
+      const endInput = row.querySelector('.emp-end');
+      endInput.addEventListener('change', e=>{
+        setEmployeeEndDate(deptId, empId, e.target.value);
+        renderForDept(block, dept);
+      });
+
+      const delBtn = row.querySelector('.del-row');
+      delBtn.addEventListener('click', ()=>{
+        removeEmployee(deptId, empId);
+      });
+
+      row.querySelectorAll('td.daycell').forEach(cell=>{
+        if(cell.classList.contains('inactive')) return; // fuori contratto, non cliccabile
+        cell.addEventListener('click', ()=>{
+          const next = cycleStatus(deptId, empId, cell.dataset.date);
+          if(next===undefined) return; // fuori contratto
+          cell.classList.remove('riposo','ferie');
+          if(next) cell.classList.add(next);
+          const report = buildCoverageReport(dept, null, []);
+          renderCoverageReport(block, report);
+          notifyChange();
+        });
+      });
+    });
+
+    const initialReport = buildCoverageReport(dept, null, []);
+    renderCoverageReport(block, initialReport);
+  }
+
+  // ---------- Events ----------
+  const periodStartInput = document.getElementById('periodStart');
+  const periodEndInput = document.getElementById('periodEnd');
+
+  periodStartInput.value = dateToStr(periodStart);
+  periodEndInput.value = dateToStr(periodEnd);
+
+  periodStartInput.addEventListener('change', e=>{
+    if(!e.target.value) return;
+    periodStart = parseDateStr(e.target.value);
+    render();
+  });
+  periodEndInput.addEventListener('change', e=>{
+    if(!e.target.value) return;
+    periodEnd = parseDateStr(e.target.value);
+    render();
+  });
+
+  document.getElementById('shareBtn').addEventListener('click', ()=>{
+    const url = window.location.href.split('?')[0]; // link pulito senza parametri
+    if(navigator.share){
+      // Web Share API: apre il foglio di condivisione nativo su iPhone/Android
+      navigator.share({
+        title: 'Prospetto Turni',
+        text: 'Apri il prospetto turni condiviso:',
+        url: url
+      }).catch(()=>{}); // ignora se l'utente annulla
+    }else{
+      // Fallback: copia negli appunti
+      navigator.clipboard.writeText(url).then(()=>{
+        flashStatus('Link copiato negli appunti!');
+      }).catch(()=>{
+        // Ultimo fallback: mostra il link in un prompt
+        prompt('Copia questo link:', url);
+      });
+    }
+  });
+
+  document.getElementById('addDeptTop').addEventListener('click', addDepartment);
+
+  document.getElementById('exportBtn').addEventListener('click', exportState);
+  document.getElementById('importFile').addEventListener('change', e=>{
+    if(e.target.files && e.target.files[0]){
+      importState(e.target.files[0]);
+      e.target.value='';
+    }
+  });
+
+  document.getElementById('exportPdfBtn').addEventListener('click', ()=>{
+    window.print();
+  });
+
+  // ---------- Firebase sync ----------
+  const DB_PATH = 'turni/v1';
+  let db = null;
+  let isRemoteUpdate = false;
+  let saveDebounce = null;
+
+  function setSyncStatus(status, msg){
+    const dot = document.getElementById('syncDot');
+    const msgEl = document.getElementById('syncMsg');
+    dot.className = 'sync-dot ' + status;
+    msgEl.textContent = msg;
+  }
+
+  function showLoading(visible){
+    const el = document.getElementById('loadingOverlay');
+    el.classList.toggle('visible', visible);
+  }
+
+  function toFirebase(){
+    return JSON.parse(JSON.stringify({
+      state: state,
+      periodStart: dateToStr(periodStart),
+      periodEnd: dateToStr(periodEnd)
+    }));
+  }
+
+  function fromFirebase(data){
+    if(!data) return false;
+    if(data.state && Array.isArray(data.state.departments)){
+      state = normalizeState(data.state);
+    }
+    if(data.periodStart) periodStart = parseDateStr(data.periodStart);
+    if(data.periodEnd)   periodEnd   = parseDateStr(data.periodEnd);
+    return true;
+  }
+
+  function syncPeriodInputs(){
+    const ps = document.getElementById('periodStart');
+    const pe = document.getElementById('periodEnd');
+    if(ps) ps.value = dateToStr(periodStart);
+    if(pe) pe.value = dateToStr(periodEnd);
+  }
+
+  // ---------- Init ----------
+  const configFilled = firebaseConfig.apiKey && firebaseConfig.apiKey !== 'LA_TUA_API_KEY';
+
+  if(!configFilled){
+    setSyncStatus('error', 'Firebase non configurato — modalità locale');
+    render();
+  } else {
+    showLoading(true);
+    try{
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.database();
+
+      // Assegna notifyChange: salva su Firebase con debounce
+      notifyChange = function(){
+        if(isRemoteUpdate) return;
+        setSyncStatus('saving', 'Salvataggio…');
+        if(saveDebounce) clearTimeout(saveDebounce);
+        saveDebounce = setTimeout(()=>{
+          db.ref(DB_PATH).set(toFirebase())
+            .then(()=> setSyncStatus('connected', 'Sincronizzato ✓'))
+            .catch(()=> setSyncStatus('error', 'Errore di salvataggio'));
+        }, 800);
+      };
+
+      // Ascolta i cambiamenti in tempo reale (aggiorna tutti gli utenti connessi)
+      db.ref(DB_PATH).on('value', snapshot => {
+        const data = snapshot.val();
+        isRemoteUpdate = true;
+
+        if(!data){
+          // Prima apertura: nessun dato ancora → salva i default
+          db.ref(DB_PATH).set(toFirebase())
+            .then(()=>{
+              showLoading(false);
+              setSyncStatus('connected', 'Connesso ✓');
+              render();
+              setTimeout(()=>{ isRemoteUpdate = false; }, 0);
+            });
+        } else {
+          fromFirebase(data);
+          syncPeriodInputs();
+          showLoading(false);
+          setSyncStatus('connected', 'Sincronizzato ✓');
+          render();
+          setTimeout(()=>{ isRemoteUpdate = false; }, 0);
+        }
+      }, err => {
+        showLoading(false);
+        setSyncStatus('error', 'Connessione fallita — controlla la config Firebase');
+        render();
+      });
+
+    } catch(err){
+      showLoading(false);
+      setSyncStatus('error', 'Errore: ' + err.message);
+      render();
+    }
+  }
+
+})();
+</script>
+</body>
+</html>
