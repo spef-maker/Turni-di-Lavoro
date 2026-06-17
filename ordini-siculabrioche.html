@@ -19,8 +19,7 @@ body{font-family:-apple-system,'Segoe UI',sans-serif;background:var(--paper);col
 /* HEADER */
 .hdr{
   background:var(--ink);color:#fff;padding:0 18px;
-  display:flex;align-items:center;gap:16px;height:52px;
-  position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;gap:16px;height:48px;
 }
 .hdr h1{font-size:18px;font-weight:400;font-family:Georgia,serif;white-space:nowrap;}
 .hdr .div{flex:1;}
@@ -53,17 +52,17 @@ table.grid th{
   padding:6px 8px;text-align:center;
   font-family:var(--mono);font-size:10px;letter-spacing:.5px;text-transform:uppercase;
   white-space:nowrap;border-right:1px solid rgba(255,255,255,.15);
-  position:sticky;top:52px;z-index:10;
+  position:sticky;top:0;z-index:10;
 }
 table.grid th.left{text-align:left;}
-table.grid th.prod-header{background:#2d2926;font-size:9px;}
-table.grid th.imballo-header{background:#3d3632;font-size:9px;color:rgba(255,255,255,.7);}
-table.grid th.tot-header{background:#c84b2f;}
-table.grid th.diff-header{background:#2d5fa8;}
+table.grid th.prod-header{background:#2d2926;font-size:11px;font-weight:700;padding:8px 10px;letter-spacing:1px;}
+table.grid th.imballo-header{background:#3d3632;font-size:10px;color:rgba(255,255,255,.8);}
+table.grid th.tot-header{background:#c84b2f;font-size:10px;}
+table.grid th.diff-header{background:#2d5fa8;font-size:10px;}
 
 table.grid td{
-  padding:5px 7px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);
-  vertical-align:middle;white-space:nowrap;
+  padding:6px 5px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);
+  vertical-align:middle;white-space:nowrap;text-align:center;
 }
 table.grid tr:hover td{background:#faf8f4;}
 table.grid .client-cell{min-width:200px;font-weight:600;position:sticky;left:0;background:#fff;z-index:5;border-right:2px solid var(--line-strong);}
@@ -73,12 +72,16 @@ table.grid tr:hover .cod-cell{background:#faf8f4;}
 
 /* number inputs in grid */
 table.grid .qty-input{
-  width:52px;text-align:center;border:none;background:transparent;
-  font-size:13px;font-family:var(--mono);color:var(--ink);
-  padding:2px 4px;border-radius:3px;
+  width:60px;min-width:60px;text-align:center;
+  border:1px solid var(--line);background:#fafafa;
+  font-size:14px;font-family:var(--mono);color:var(--ink);
+  padding:4px 4px;border-radius:3px;display:block;
+  -moz-appearance:textfield;
 }
-table.grid .qty-input:focus{outline:2px solid var(--accent);background:#fff;}
-table.grid .qty-input::-webkit-inner-spin-button{-webkit-appearance:none;}
+table.grid .qty-input:focus{outline:2px solid var(--accent);background:#fff;border-color:var(--accent);}
+table.grid .qty-input:hover{border-color:var(--accent);}
+table.grid .qty-input::-webkit-inner-spin-button,
+table.grid .qty-input::-webkit-outer-spin-button{-webkit-appearance:none;}
 
 /* totals */
 .tot-cell{background:#fef2ef !important;font-weight:700;font-family:var(--mono);text-align:right;color:var(--accent);}
@@ -165,10 +168,82 @@ table.anag tr:hover td{background:#faf8f4;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
 .empty{text-align:center;padding:48px;color:var(--muted);font-style:italic;}
+
+/* Production layout */
+.prod-date-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--ink);flex-wrap:wrap;gap:8px;
+}
+.prod-date-header h3{font-family:Georgia,serif;font-size:18px;font-weight:400;margin:0;}
+.btn-print-date{padding:5px 12px;font-size:12px;}
+
+.prod-summary-row{
+  display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;
+}
+.prod-mini-card{
+  background:#fff;border:1px solid var(--line);border-radius:5px;overflow:hidden;min-width:80px;text-align:center;
+}
+.prod-mini-label{
+  padding:3px 6px;font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:#fff;
+}
+.prod-mini-val{
+  font-family:Georgia,serif;font-size:22px;padding:4px 8px 0;line-height:1.1;
+}
+.prod-mini-sub{font-size:10px;color:var(--muted);padding:2px 6px 6px;}
+
+.print-client-table{overflow-x:auto;margin-bottom:28px;}
+.print-table{width:100%;border-collapse:collapse;}
+.print-table th,.print-table td{padding:4px 6px;border:1px solid #ccc;vertical-align:middle;}
+.print-table th{text-align:center;font-size:10px;text-transform:uppercase;letter-spacing:.5px;}
+.print-table td{font-size:11px;}
+
+.print-section{margin-bottom:32px;}
+
+/* Print CSS */
+.print-only{display:none;}
+
+@media print{
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  body{background:#fff;font-size:10px;margin:0;}
+  .hdr,.tabs,.tbar,.add-row-form,#noClientsBanner,#briocheCounter,
+  #recentOrderAlert,.no-print{display:none!important;}
+
+  /* When printing single date */
+  body.printing-single .prod-section{display:none!important;}
+  body.printing-single .prod-section.print-active{display:block!important;}
+
+  .prod-date-header{border-bottom:2px solid #000;margin-bottom:10px;}
+  .prod-date-header h3{font-size:14px;}
+  .prod-mini-card{display:none;}
+  .print-only{display:block!important;}
+  .print-summary{margin-bottom:10px;}
+  .print-summary .print-table{font-size:10px;}
+  .print-summary .print-table th,.print-summary .print-table td{padding:3px 5px;}
+
+  .print-client-table{overflow:visible;}
+  .print-table{font-size:9px;page-break-inside:avoid;}
+  .print-table th,.print-table td{padding:3px 4px;}
+
+  .print-section{page-break-after:always;margin-bottom:0;}
+  .print-section:last-child{page-break-after:avoid;}
+
+  /* A4 portrait optimizations */
+  @page{size:A4 portrait;margin:12mm 10mm 12mm 10mm;}
+
+  /* Company header on print */
+  .main::before{
+    content:'Siculabrioche · Foglio di Produzione';
+    display:block;
+    font-family:Georgia,serif;
+    font-size:16px;
+    font-weight:400;
+    border-bottom:2px solid #000;
+    padding-bottom:6px;
+    margin-bottom:14px;
+  }
+}
 </style>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js"></script>
 </head>
 <body>
 
@@ -191,8 +266,15 @@ table.anag tr:hover td{background:#faf8f4;}
   <div class="panel active" id="tab-ordini">
     <div class="tbar">
       <button class="btn primary" id="btnAddRow">+ Aggiungi cliente</button>
-      <button class="btn" id="btnNewSession">🗓 Nuova sessione ordini</button>
+      <button class="btn" id="btnNewSession">🗓 Nuova sessione</button>
+      <select id="sessionSelector" style="padding:7px 10px;border:1px solid var(--line-strong);border-radius:var(--radius);font-size:13px;background:#fff;max-width:260px;">
+        <option value="">— Sessioni precedenti —</option>
+      </select>
+      <button class="btn" id="btnDeleteSession" title="Elimina sessione corrente" style="color:var(--accent);">🗑 Elimina sessione</button>
       <button class="btn" id="btnExportPdf">Esporta PDF</button>
+      <button class="btn" id="btnBackup">💾 Backup JSON</button>
+      <label class="btn" for="btnRestore" style="cursor:pointer;">📂 Ripristina JSON</label>
+      <input type="file" id="btnRestore" accept=".json" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;">
       <span style="flex:1"></span>
       <label style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">
         Data spedizione:
@@ -201,6 +283,28 @@ table.anag tr:hover td{background:#faf8f4;}
     </div>
     <div id="noClientsBanner" style="display:none;background:#faf0d0;border:1px solid #c49a2a;border-radius:5px;padding:12px 16px;margin-bottom:14px;font-size:13px;">
       ⚠️ <strong>Anagrafica vuota</strong> — Vai alla tab <strong>👥 Anagrafica</strong> e carica il file <code>clienti.csv</code> prima di inserire ordini.
+    </div>
+
+    <!-- Contatore brioche disponibili -->
+    <div id="briocheCounter" style="background:#fff8dc;border:2px solid #d4a800;border-radius:6px;padding:12px 18px;margin-bottom:14px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+      <span style="font-family:Georgia,serif;font-size:16px;font-weight:400;">🥐 Brioche disponibili:</span>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);">
+        Produzione totale
+        <input type="number" id="briocheTotale" min="0" placeholder="0"
+          style="width:90px;padding:6px 8px;border:1px solid #d4a800;border-radius:4px;font-size:15px;font-family:var(--mono);font-weight:700;text-align:center;background:#fff;">
+      </label>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:13px;color:var(--muted);">Ordinate oggi:</span>
+        <span id="briocheOrdinate" style="font-family:var(--mono);font-size:18px;font-weight:700;color:#d4a800;">0</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;border-left:2px solid #d4a800;padding-left:18px;">
+        <span style="font-size:13px;color:var(--muted);">Rimanenti:</span>
+        <span id="briocheRimanenti" style="font-family:Georgia,serif;font-size:24px;font-weight:400;">—</span>
+      </div>
+    </div>
+
+    <!-- Alert ordine recente (hidden by default) -->
+    <div id="recentOrderAlert" style="display:none;background:#fde8e6;border:2px solid #c84b2f;border-radius:6px;padding:12px 18px;margin-bottom:14px;font-size:13px;">
     </div>
 
     <!-- Add client row (hidden by default) -->
@@ -220,12 +324,14 @@ table.anag tr:hover td{background:#faf8f4;}
 
   <!-- ── PRODUZIONE ── -->
   <div class="panel" id="tab-produzione">
-    <div class="prod-settings">
-      <strong style="font-family:Georgia,serif;font-size:15px;font-weight:400;">Obiettivo produzione:</strong>
-      <label>Target totale pezzi <input type="number" id="targetTotal" placeholder="es. 50000" min="0"></label>
-      <span style="color:var(--muted);font-size:12px;">oppure lascia vuoto per vedere solo i totali ordini</span>
+    <div class="prod-settings no-print" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
+      <select id="prodSessionSelector" style="padding:7px 10px;border:1px solid var(--line-strong);border-radius:var(--radius);font-size:13px;background:#fff;max-width:280px;">
+        <option value="">— Seleziona sessione —</option>
+      </select>
+      <button class="btn primary" id="btnPrintProd">🖨️ Stampa</button>
+      <span style="color:var(--muted);font-size:12px;margin-left:4px;">Filtra per data o mostra tutto</span>
     </div>
-    <div id="prodContent"><div class="empty">Aggiungi ordini per vedere il riepilogo produzione.</div></div>
+    <div id="prodContent"><div class="empty">Seleziona una sessione dal menu per visualizzare la produzione.</div></div>
   </div>
 
   <!-- ── ANAGRAFICA ── -->
@@ -240,7 +346,7 @@ table.anag tr:hover td{background:#faf8f4;}
     <div id="firstRunBanner" style="display:none;background:#faf0d0;border:1px solid #c49a2a;border-radius:5px;padding:14px 18px;margin-bottom:14px;font-size:13px;line-height:1.7;">
       <strong>👋 Prima configurazione</strong> — Nessun cliente in anagrafica.<br>
       Clicca <strong>"📁 Carica file clienti (CSV)"</strong> e seleziona il file <code>clienti.csv</code> che hai scaricato.<br>
-      I clienti verranno salvati automaticamente su Firebase per tutti gli utenti.
+      I clienti verranno salvati nel browser. Usa "Backup dati" per condividerli.
     </div>
     <div class="anag-table-wrap">
       <table class="anag">
@@ -274,31 +380,34 @@ const firebaseConfig = {
 // PRODOTTI + IMBALLI
 // ══════════════════════════════════════════
 const PRODUCTS = [
-  { id:'brioche',    name:'BRIOCHE',           imballi:[112,104,52,26],  pz_per_imballo:{112:112,104:104,52:52,26:26}, unit:'imballi' },
-  { id:'mini',       name:'MINI',              imballi:[112,52,26],      pz_per_imballo:{112:112,52:52,26:26},         unit:'imballi' },
-  { id:'paffutella', name:'PAFFUTELLA',        imballi:[80,40,20],       pz_per_imballo:{80:80,40:40,20:20},           unit:'imballi' },
-  { id:'panzotta',   name:'PANZOTTA',          imballi:[112,104,52,26],  pz_per_imballo:{112:112,104:104,52:52,26:26}, unit:'imballi' },
-  { id:'choco',      name:'BRIOSCIA CHOCO',    imballi:[112,52,26],      pz_per_imballo:{112:112,52:52,26:26},         unit:'imballi' },
-  { id:'mandorla',   name:'PASTA MANDORLA',    imballi:['pz'],           pz_per_imballo:{pz:1},                        unit:'pz' },
-  { id:'lattante',   name:'PASTA LATTANTE',    imballi:['pz'],           pz_per_imballo:{pz:1},                        unit:'pz' },
+  { id:'brioche',    name:'BRIOCHE',           imballi:[112,104,52,26],      pz_per_imballo:{112:112,104:104,52:52,26:26},          unit:'imballi', color:'#d4a800', colorLight:'#fff8dc' },
+  { id:'mini',       name:'MINI',              imballi:[112,52,26],           pz_per_imballo:{112:112,52:52,26:26},                  unit:'imballi', color:'#c0392b', colorLight:'#fde8e6' },
+  { id:'paffutella', name:'PAFFUTELLA',        imballi:[26,52,112,20,40,80],  pz_per_imballo:{26:26,52:52,112:112,20:20,40:40,80:80}, unit:'imballi', color:'#1a7a4a', colorLight:'#e0f5ea',
+    colorByImb:{26:'#2ecc71',52:'#2ecc71',112:'#2ecc71', 20:'#145a32',40:'#145a32',80:'#145a32'},
+    colorLightByImb:{26:'#d5f5e3',52:'#d5f5e3',112:'#d5f5e3', 20:'#a9dfbf',40:'#a9dfbf',80:'#a9dfbf'} },
+  { id:'panzotta',   name:'PANZOTTA',          imballi:[112,104,52,26],       pz_per_imballo:{112:112,104:104,52:52,26:26},          unit:'imballi', color:'#7e3bb5', colorLight:'#f0e5fa' },
+  { id:'choco',      name:'BRIOSCIA CHOCO',    imballi:[112,52,26],           pz_per_imballo:{112:112,52:52,26:26},                  unit:'imballi', color:'#6b3a1f', colorLight:'#f5ece6' },
+  { id:'mandorla',   name:'PASTA MANDORLA',    imballi:['pz'],                pz_per_imballo:{pz:1},                                unit:'pz',      color:'#c47c00', colorLight:'#fff3e0' },
+  { id:'lattante',   name:'PASTA LATTANTE',    imballi:['pz'],                pz_per_imballo:{pz:1},                                unit:'pz',      color:'#1565a8', colorLight:'#e3edf8' },
 ];
 
 // ══════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════
-let db = null;
 let clients = [];       // [{cod, nome}]
 let orders = {};        // sessionId → { date, rows: [{clientCod, clientNome, qtys:{brioche:{112:0,...},...}}] }
 let currentSession = null;
 let notifyChange = ()=>{};
-let saveDebounce = null;
-let isRemoteUpdate = false;
+let anagPage = 0;
+const ANAG_PAGE_SIZE = 100;
+let filteredClients = [];
 
 // ══════════════════════════════════════════
 // UTILS
 // ══════════════════════════════════════════
 function uid(){ return 'r_'+Date.now()+'_'+Math.random().toString(36).slice(2,6); }
 function todayStr(){ const d=new Date(); return d.toISOString().slice(0,10); }
+function dateToStr(d){ return d.toISOString().slice(0,10); }
 function esc(s){ return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 function calcPzRow(row){
@@ -323,8 +432,14 @@ function setSyncStatus(cls,msg){
 function ensureSession(){
   if(currentSession && orders[currentSession]) return;
   const date = document.getElementById('sessionDate').value || todayStr();
-  currentSession = 'ses_'+date.replace(/-/g,'');
-  if(!orders[currentSession]) orders[currentSession] = { date, rows:[] };
+  // Try to find an existing session for this date
+  const existing = Object.keys(orders).find(k=> orders[k].date === date);
+  if(existing){
+    currentSession = existing;
+  } else {
+    currentSession = 'ses_'+date.replace(/-/g,'')+'_'+Math.random().toString(36).slice(2,6);
+    orders[currentSession] = { date, rows:[] };
+  }
 }
 
 function getSession(){
@@ -332,9 +447,173 @@ function getSession(){
   return orders[currentSession];
 }
 
+function renderSessionSelector(){
+  const sel = document.getElementById('sessionSelector');
+  if(!sel) return;
+
+  const sessions = Object.entries(orders)
+    .map(([id, ses]) => ({ id, date: ses.date||'', rows: (ses.rows||[]).length }))
+    .sort((a,b) => b.date.localeCompare(a.date));
+
+  if(sessions.length <= 1){
+    sel.innerHTML = '<option value="">— Nessuna sessione precedente —</option>';
+    if(sessions.length === 1){
+      const s = sessions[0];
+      sel.innerHTML = `<option value="${s.id}" selected>${fmtDateSimple(s.date)} (${s.rows} clienti) ◀ corrente</option>`;
+    }
+  } else {
+    sel.innerHTML = sessions.map(s => {
+      const label = s.date ? fmtDateSimple(s.date) : 'Senza data';
+      const isCurrent = s.id === currentSession;
+      return `<option value="${s.id}" ${isCurrent?'selected':''}>${label} · ${s.rows} clienti${isCurrent?' ◀':''}</option>`;
+    }).join('');
+  }
+
+  // Sync date picker to current session date
+  const ses = currentSession && orders[currentSession];
+  if(ses && ses.date) document.getElementById('sessionDate').value = ses.date;
+}
+
+function fmtDateSimple(d){
+  if(!d) return '—';
+  const [y,m,g] = d.split('-');
+  const days = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+  const dt = new Date(+y, +m-1, +g);
+  return `${days[dt.getDay()]} ${g}/${m}/${y}`;
+}
+
 // ══════════════════════════════════════════
 // RENDER ORDINI GRID
 // ══════════════════════════════════════════
+// ══════════════════════════════════════════
+// BRIOCHE COUNTER
+// ══════════════════════════════════════════
+function updateBriocheCounter(){
+  const today = todayStr();
+  const briocheP = PRODUCTS.find(p=>p.id==='brioche');
+  if(!briocheP) return;
+
+  // Sum all brioche pz from ALL sessions where dataSped = today
+  let ordinateOggi = 0;
+  Object.values(orders).forEach(ses=>{
+    (ses.rows||[]).forEach(row=>{
+      // check dataSped matches today (stored in session date or per-row dataLav? 
+      // We use the session date as the spedizione date
+      const sesDate = ses.date || '';
+      if(sesDate !== today) return;
+      briocheP.imballi.forEach(imb=>{
+        const v = parseInt((row.qtys||{})[briocheP.id]?.[imb]||0);
+        ordinateOggi += v * briocheP.pz_per_imballo[imb];
+      });
+    });
+  });
+
+  const totEl = document.getElementById('briocheTotale');
+  const ordEl = document.getElementById('briocheOrdinate');
+  const rimEl = document.getElementById('briocheRimanenti');
+  if(!ordEl || !rimEl) return;
+
+  ordEl.textContent = ordinateOggi;
+
+  const totale = parseInt(totEl?.value||0)||0;
+  if(totale > 0){
+    const rim = totale - ordinateOggi;
+    rimEl.textContent = rim;
+    rimEl.style.color = rim < 0 ? '#c84b2f' : rim === 0 ? '#c49a2a' : '#1a7a4a';
+    rimEl.style.fontWeight = rim < 0 ? '700' : '400';
+  } else {
+    rimEl.textContent = '—';
+    rimEl.style.color = 'var(--ink)';
+  }
+}
+
+// ══════════════════════════════════════════
+// RECENT ORDER CHECK
+// ══════════════════════════════════════════
+function checkRecentOrders(clientCod, clientNome){
+  // Data di riferimento: la data della sessione corrente (non necessariamente oggi)
+  const ses = getSession();
+  const sessionDate = ses.date || todayStr();
+
+  // Calcola i 3 giorni precedenti alla data della sessione corrente
+  const refDate = new Date(sessionDate + 'T00:00:00');
+  const limitDate = new Date(refDate);
+  limitDate.setDate(limitDate.getDate() - 3);
+  const limitStr = limitDate.toISOString().slice(0,10);
+
+  // Cerca in TUTTE le sessioni (esclusa quella corrente) nell'intervallo
+  const found = [];
+  Object.entries(orders).forEach(([sesId, s])=>{
+    if(sesId === currentSession) return; // escludi sessione corrente
+    const d = s.date || '';
+    if(!d || d < limitStr || d >= sessionDate) return; // solo giorni PRECEDENTI
+    (s.rows||[]).forEach(row=>{
+      // Confronta per codice cliente (se disponibile) o per nome
+      const matchByCod = clientCod && row.clientCod && row.clientCod === clientCod;
+      const matchByName = !clientCod && row.clientNome && row.clientNome.toUpperCase() === clientNome.toUpperCase();
+      if(!matchByCod && !matchByName) return;
+
+      let pz = 0;
+      PRODUCTS.forEach(p=>{
+        p.imballi.forEach(imb=>{
+          pz += parseInt((row.qtys||{})[p.id]?.[imb]||0) * p.pz_per_imballo[imb];
+        });
+      });
+      if(pz > 0 || row.lotto || row.note){
+        found.push({ date: d, pz, lotto: row.lotto||'', note: row.note||'', corriere: row.corriere||'' });
+      }
+    });
+  });
+
+  const alertEl = document.getElementById('recentOrderAlert');
+  if(!alertEl) return found.length > 0;
+
+  if(found.length === 0){
+    alertEl.style.display = 'none';
+    return false;
+  }
+
+  found.sort((a,b)=>b.date.localeCompare(a.date));
+  const details = found.map(f=>`
+    <span style="display:inline-block;margin:2px 12px 2px 0;">
+      📅 <strong>${fmtDateSimple(f.date)}</strong> — ${f.pz} pz
+      ${f.lotto ? '· Lotto '+f.lotto : ''}
+      ${f.corriere ? '· '+f.corriere : ''}
+      ${f.note ? '· <em>'+esc(f.note)+'</em>' : ''}
+    </span>
+  `).join('');
+
+  alertEl.innerHTML = `⚠️ <strong>${esc(clientNome)}</strong> ha già ordinato nei 3 giorni precedenti al ${fmtDateSimple(sessionDate)}:<br>
+    <div style="margin-top:6px;">${details}</div>
+    <button onclick="document.getElementById('recentOrderAlert').style.display='none'"
+      style="float:right;margin-top:-28px;border:none;background:transparent;cursor:pointer;font-size:18px;color:var(--accent);">✕</button>`;
+  alertEl.style.display = 'block';
+  return true;
+}
+
+// ══════════════════════════════════════════
+// KEYBOARD NAVIGATION IN GRID
+// ══════════════════════════════════════════
+function moveFocus(currentInput, dCol, dRow){
+  const all = Array.from(document.querySelectorAll('.qty-input'));
+  if(!all.length) return;
+  const ri  = +currentInput.dataset.ri;
+  const pid = currentInput.dataset.pid;
+  const imb = currentInput.dataset.imb;
+  if(dRow !== 0){
+    const target = all.find(el =>
+      +el.dataset.ri === ri + dRow &&
+      el.dataset.pid === pid &&
+      el.dataset.imb === imb
+    );
+    if(target){ target.focus(); target.select(); }
+    return;
+  }
+  const idx = all.indexOf(currentInput);
+  const next = all[idx + dCol];
+  if(next){ next.focus(); next.select(); }
+}
+
 function renderGrid(){
   ensureSession();
   const ses = getSession();
@@ -349,27 +628,33 @@ function renderGrid(){
 
   if(rows.length === 0){
     wrap.innerHTML = '<div class="empty">Nessun ordine. Clicca "+ Aggiungi cliente" per iniziare.</div>';
+    renderSessionSelector();
+    updateBriocheCounter();
     return;
   }
 
   // Build header
   let head1 = `<tr>
-    <th class="left" rowspan="2" style="min-width:200px;left:0;z-index:15;">CLIENTE</th>
-    <th rowspan="2" style="min-width:60px;left:200px;z-index:15;">COD.</th>`;
+    <th class="left" rowspan="2" style="min-width:220px;left:0;z-index:15;">CLIENTE</th>`;
 
   PRODUCTS.forEach(p=>{
-    head1 += `<th class="prod-header" colspan="${p.imballi.length+1}">${esc(p.name)}</th>`;
+    head1 += `<th class="prod-header" colspan="${p.imballi.length}" style="background:${p.color};">${esc(p.name)}</th>`;
   });
-  head1 += `<th class="tot-header" rowspan="2">TOT PZ</th>
+  head1 += `<th rowspan="2" style="min-width:70px;background:#4a3f35;">LOTTO</th>
+    <th rowspan="2" style="min-width:100px;background:#4a3f35;">DATA RIC.</th>
+    <th rowspan="2" style="min-width:100px;background:#4a3f35;">DATA LAV.</th>
+    <th rowspan="2" style="min-width:90px;background:#2d4a6b;">CORRIERE</th>
+    <th rowspan="2" style="min-width:150px;background:#2d4a6b;">NOTE</th>
+    <th class="tot-header" rowspan="2">TOT PZ</th>
     <th class="diff-header" rowspan="2">DA PROD./VENDERE</th>
     <th rowspan="2"></th></tr>`;
 
   let head2 = '<tr>';
   PRODUCTS.forEach(p=>{
     p.imballi.forEach(imb=>{
-      head2 += `<th class="imballo-header">${imb}</th>`;
+      const bg = (p.colorByImb && p.colorByImb[imb]) ? p.colorByImb[imb] : p.color+'cc';
+      head2 += `<th class="imballo-header" style="background:${bg};">${imb}</th>`;
     });
-    head2 += `<th class="imballo-header" style="color:#f5a58a;">TOT</th>`;
   });
   head2 += '</tr>';
 
@@ -388,35 +673,52 @@ function renderGrid(){
         const pz = v * p.pz_per_imballo[imb];
         prodPz += pz;
         colTotals[p.id][imb] += v;
-        cells += `<td style="text-align:center;">
+        const cellBg = (p.colorLightByImb && p.colorLightByImb[imb]) ? p.colorLightByImb[imb] : p.colorLight;
+        cells += `<td style="text-align:center;background:${cellBg};">
           <input type="number" class="qty-input" min="0"
             data-ri="${ri}" data-pid="${p.id}" data-imb="${imb}"
             value="${v||''}">
         </td>`;
       });
       colTotals[p.id]['_tot'] += prodPz;
-      cells += `<td class="tot-cell" id="ptot-${ri}-${p.id}" style="min-width:50px;">${prodPz||''}</td>`;
       rowPz += prodPz;
     });
     totalPz += rowPz;
 
     return `<tr data-ri="${ri}">
-      <td class="client-cell">${esc(row.clientNome||'')}</td>
-      <td class="cod-cell">${esc(row.clientCod||'')}</td>
+      <td class="client-cell">
+        ${row.clientCod ? `<span style="font-family:var(--mono);font-size:10px;color:var(--muted);display:block;line-height:1.2;">${esc(row.clientCod)}</span>` : ''}
+        ${esc(row.clientNome||'')}
+      </td>
       ${cells}
+      <td style="min-width:70px;background:#faf8f4;"><input type="text" class="meta-input lotto-input" data-ri="${ri}" data-field="lotto" value="${esc(row.lotto||'')}" placeholder="—" maxlength="20" style="width:65px;border:1px solid var(--line);border-radius:3px;padding:3px 5px;font-family:var(--mono);font-size:12px;text-align:center;background:transparent;"></td>
+      <td style="min-width:100px;background:#faf8f4;"><input type="date" class="meta-input dataric-input" data-ri="${ri}" data-field="dataRic" value="${esc(row.dataRic||'')}" style="width:98px;border:1px solid var(--line);border-radius:3px;padding:3px 4px;font-size:11px;background:transparent;"></td>
+      <td style="min-width:100px;background:#faf8f4;"><input type="date" class="meta-input datalav-input" data-ri="${ri}" data-field="dataLav" value="${esc(row.dataLav||'')}" style="width:98px;border:1px solid var(--line);border-radius:3px;padding:3px 4px;font-size:11px;background:transparent;"></td>
+      <td style="min-width:90px;background:#edf2f8;text-align:center;">
+        <select class="meta-input corriere-select" data-ri="${ri}" data-field="corriere" style="width:84px;border:1px solid var(--line);border-radius:3px;padding:3px 4px;font-size:12px;font-weight:600;background:transparent;color:var(--ink);">
+          <option value="" ${!row.corriere?'selected':''}>—</option>
+          <option value="BRT" ${row.corriere==='BRT'?'selected':''}>BRT</option>
+          <option value="GLS" ${row.corriere==='GLS'?'selected':''}>GLS</option>
+          <option value="SDA" ${row.corriere==='SDA'?'selected':''}>SDA</option>
+          <option value="TNT" ${row.corriere==='TNT'?'selected':''}>TNT</option>
+          <option value="DHL" ${row.corriere==='DHL'?'selected':''}>DHL</option>
+          <option value="Ritiro" ${row.corriere==='Ritiro'?'selected':''}>Ritiro</option>
+        </select>
+      </td>
+      <td style="min-width:150px;background:#edf2f8;">
+        <input type="text" class="meta-input note-input" data-ri="${ri}" data-field="note" value="${esc(row.note||'')}" placeholder="Note…" maxlength="120" style="width:145px;border:1px solid var(--line);border-radius:3px;padding:3px 6px;font-size:12px;background:transparent;">
+      </td>
       <td class="tot-cell" id="rtot-${ri}">${rowPz||''}</td>
       <td class="${rowPz>0?'diff-pos':'diff-zero'}" id="diff-${ri}">${rowPz||''}</td>
       <td><button class="btn sm" onclick="removeRow(${ri})" title="Elimina riga">🗑</button></td>
-    </tr>`;
-  }).join('');
+    </tr>`;  }).join('');
 
   // Footer totals
   let footCells = '';
   PRODUCTS.forEach(p=>{
     p.imballi.forEach(imb=>{
-      footCells += `<td id="ftot-${p.id}-${imb}">${colTotals[p.id][imb]||''}</td>`;
+      footCells += `<td id="ftot-${p.id}-${imb}" style="background:${(p.colorLightByImb&&p.colorLightByImb[imb])||p.colorLight};font-family:var(--mono);text-align:center;">${colTotals[p.id][imb]||''}</td>`;
     });
-    footCells += `<td id="ftot-${p.id}-tot">${colTotals[p.id]['_tot']||''}</td>`;
   });
 
   const target = parseInt(document.getElementById('targetTotal')?.value||0)||0;
@@ -429,8 +731,9 @@ function renderGrid(){
     <tbody>${bodyRows}</tbody>
     <tfoot>
       <tr class="grid-footer">
-        <td class="client-cell" colspan="2">TOTALE ORDINI</td>
+        <td class="client-cell">TOTALE ORDINI</td>
         ${footCells}
+        <td></td><td></td><td></td><td></td><td></td>
         <td id="grand-total">${totalPz||''}</td>
         <td class="${diffClass}" id="grand-diff">${diffTxt}</td>
         <td></td>
@@ -439,8 +742,10 @@ function renderGrid(){
   </table>`;
 
   wrap.innerHTML = table;
+  renderSessionSelector();
+  updateBriocheCounter();
 
-  // Attach input listeners — update state on every keystroke (input),
+  // Attach input listeners
   // refresh totals row only on blur so the cursor is never lost
   document.querySelectorAll('.qty-input').forEach(inp=>{
     inp.addEventListener('input', e=>{
@@ -456,8 +761,49 @@ function renderGrid(){
       updateRowTotals(ri);
     });
     inp.addEventListener('blur', e=>{
-      // full refresh of footer totals + save after editing
       updateAllTotals();
+      updateBriocheCounter();
+      renderProduzione();
+      notifyChange();
+    });
+
+    // Navigazione tastiera: Tab/Invio → destra, Shift+Tab → sinistra, ↑↓ → su/giù
+    inp.addEventListener('keydown', e=>{
+      if(e.key === 'Enter' || (e.key === 'Tab' && !e.shiftKey)){
+        e.preventDefault();
+        moveFocus(e.target, 1, 0);
+      } else if(e.key === 'Tab' && e.shiftKey){
+        e.preventDefault();
+        moveFocus(e.target, -1, 0);
+      } else if(e.key === 'ArrowDown'){
+        e.preventDefault();
+        moveFocus(e.target, 0, 1);
+      } else if(e.key === 'ArrowUp'){
+        e.preventDefault();
+        moveFocus(e.target, 0, -1);
+      } else if(e.key === 'ArrowRight'){
+        // solo se cursore è alla fine del valore
+        if(e.target.selectionStart === String(e.target.value).length){
+          e.preventDefault();
+          moveFocus(e.target, 1, 0);
+        }
+      } else if(e.key === 'ArrowLeft'){
+        if(e.target.selectionStart === 0){
+          e.preventDefault();
+          moveFocus(e.target, -1, 0);
+        }
+      }
+    });
+  });
+
+  // Listeners for lotto and date fields
+  document.querySelectorAll('.meta-input').forEach(inp=>{
+    inp.addEventListener('change', e=>{
+      const ri = +e.target.dataset.ri;
+      const field = e.target.dataset.field;
+      const ses = getSession();
+      if(ses.rows[ri]) ses.rows[ri][field] = e.target.value;
+      if(document.getElementById("tab-produzione").classList.contains("active")) renderProduzione();
       notifyChange();
     });
   });
@@ -487,8 +833,6 @@ function updateRowTotals(ri){
       const v = parseInt(inp.value)||0;
       prodPz += v * (p.pz_per_imballo[imb]||0);
     });
-    const totEl = document.getElementById(`ptot-${ri}-${p.id}`);
-    if(totEl) totEl.textContent = prodPz || '';
   });
   // update row total
   const rowPz = calcRowPzFromInputs(ri);
@@ -525,8 +869,6 @@ function updateAllTotals(){
       const el = document.getElementById(`ftot-${p.id}-${imb}`);
       if(el) el.textContent = colTotals[p.id][imb] || '';
     });
-    const el = document.getElementById(`ftot-${p.id}-tot`);
-    if(el) el.textContent = colTotals[p.id]['_tot'] || '';
   });
   const gtEl = document.getElementById('grand-total');
   if(gtEl) gtEl.textContent = totalPz || '';
@@ -618,6 +960,11 @@ document.getElementById('btnCancelAdd').addEventListener('click', ()=>{
   document.getElementById('addRowForm').style.display='none';
   document.getElementById('acInput').value='';
   selectedClient=null;
+  document.getElementById('recentOrderAlert').style.display='none';
+});
+
+document.getElementById('briocheTotale').addEventListener('input', ()=>{
+  updateBriocheCounter();
 });
 
 document.getElementById('btnConfirmAdd').addEventListener('click', ()=>{
@@ -636,163 +983,328 @@ document.getElementById('btnConfirmAdd').addEventListener('click', ()=>{
     }
   }
 
-  // check duplicate
+  // check duplicate in current session
   if(client.cod && ses.rows.find(r=>r.clientCod===client.cod)){
     if(!confirm(`${client.nome} è già nella lista. Aggiungere comunque?`)) return;
   }
 
-  ses.rows.push({ id:uid(), clientCod:client.cod||'', clientNome:client.nome, qtys:{} });
+  ses.rows.push({ id:uid(), clientCod:client.cod||'', clientNome:client.nome, qtys:{}, lotto:'', dataRic:'', dataLav:'', corriere:'', note:'' });
   document.getElementById('acInput').value='';
   selectedClient = null;
   acItems = [];
   document.getElementById('addRowForm').style.display='none';
   document.getElementById('acList').style.display='none';
 
-  // DEBUG: log state before render
-  console.log('Rows after push:', JSON.stringify(ses.rows));
-  console.log('currentSession:', currentSession);
-  console.log('orders keys:', Object.keys(orders));
-
   renderGrid();
+  renderProduzione();
   notifyChange();
+
+  // Check for recent orders (show alert after render so it's visible)
+  checkRecentOrders(client.cod, client.nome);
 });
 
 // ══════════════════════════════════════════
 // NEW SESSION
 // ══════════════════════════════════════════
 document.getElementById('btnNewSession').addEventListener('click', ()=>{
-  if(!confirm('Avviare una nuova sessione ordini? I dati esistenti restano salvati.')) return;
   const date = document.getElementById('sessionDate').value || todayStr();
-  currentSession = 'ses_'+date.replace(/-/g,'')+uid();
+  if(!confirm(`Avviare una nuova sessione per il ${fmtDateSimple(date)}?\nLa sessione corrente viene conservata e sarà accessibile dal menu a tendina.`)) return;
+  currentSession = 'ses_'+date.replace(/-/g,'')+'_'+Math.random().toString(36).slice(2,6);
   orders[currentSession] = { date, rows:[] };
   renderGrid();
   renderProduzione();
   notifyChange();
 });
 
-document.getElementById('sessionDate').addEventListener('change', ()=>{
+document.getElementById('sessionSelector').addEventListener('change', function(){
+  const id = this.value;
+  if(!id) return;
+  currentSession = id;
+  renderGrid();
+  renderProduzione();
+});
+
+document.getElementById('btnDeleteSession').addEventListener('click', ()=>{
+  if(!currentSession || !orders[currentSession]) return;
+  const ses = orders[currentSession];
+  const label = fmtDateSimple(ses.date);
+  if(!confirm(`Eliminare definitivamente la sessione "${label}" con ${(ses.rows||[]).length} clienti?\nQuesta azione non può essere annullata.`)) return;
+  delete orders[currentSession];
+  currentSession = null;
   ensureSession();
   renderGrid();
+  renderProduzione();
+  notifyChange();
+});
+
+document.getElementById('sessionDate').addEventListener('change', ()=>{
+  const date = document.getElementById('sessionDate').value;
+  if(!date) return;
+  // Look for an existing session for this date
+  const existing = Object.keys(orders).find(k=> orders[k].date === date);
+  if(existing){
+    currentSession = existing;
+  } else {
+    // create new session for this date
+    currentSession = null;
+    ensureSession();
+  }
+  renderGrid();
+  renderProduzione();
 });
 
 // ══════════════════════════════════════════
 // PRODUZIONE
 // ══════════════════════════════════════════
 function renderProduzione(){
-  ensureSession();
-  const ses = getSession();
-  const rows = ses.rows || [];
-  const target = parseInt(document.getElementById('targetTotal').value||0)||0;
+  const el = document.getElementById('prodContent');
 
-  // aggregate by product+imballo
-  const totals = {};
-  PRODUCTS.forEach(p=>{ totals[p.id]={}; p.imballi.forEach(i=>totals[p.id][i]=0); });
-
-  rows.forEach(row=>{
-    PRODUCTS.forEach(p=>{
-      p.imballi.forEach(imb=>{
-        totals[p.id][imb] += parseInt((row.qtys||{})[p.id]?.[imb]||0);
-      });
-    });
-  });
-
-  // total pz
-  let totalPz = 0;
-  PRODUCTS.forEach(p=>{
-    p.imballi.forEach(imb=>{
-      totalPz += totals[p.id][imb] * p.pz_per_imballo[imb];
-    });
-  });
-
-  const diff = target ? target - totalPz : null;
-
-  let html = `<div class="prod-section">`;
-  if(target){
-    const cls = diff>0?'color:var(--green)':diff<0?'color:var(--accent)':'color:var(--muted)';
-    html += `<div style="background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin-bottom:18px;display:flex;gap:32px;flex-wrap:wrap;">
-      <div><div style="font-family:Georgia,serif;font-size:26px;">${totalPz.toLocaleString()}</div><div style="font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Pezzi ordinati</div></div>
-      <div><div style="font-family:Georgia,serif;font-size:26px;">${target.toLocaleString()}</div><div style="font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Target produzione</div></div>
-      <div><div style="font-family:Georgia,serif;font-size:26px;${cls}">${diff>0?'+'+diff:diff}</div><div style="font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">${diff>0?'Da vendere ancora':'Produzione in eccesso'}</div></div>
-    </div>`;
+  // ── helpers ──
+  function calcPzForIdInRows(id, rowSet){
+    const p = PRODUCTS.find(x=>x.id===id);
+    if(!p) return 0;
+    return rowSet.reduce((acc,row)=>
+      acc + p.imballi.reduce((s,imb)=>
+        s + parseInt((row.qtys||{})[p.id]?.[imb]||0) * p.pz_per_imballo[imb], 0), 0);
   }
 
-  html += `<h3>Riepilogo per prodotto</h3><div class="prod-grid">`;
+  const fmtN = n => n%1===0?n:n.toFixed(1);
 
-  PRODUCTS.forEach(p=>{
-    let prodPz = 0;
-    let rows_html = '';
-    p.imballi.forEach(imb=>{
-      const qty = totals[p.id][imb];
-      const pz = qty * p.pz_per_imballo[imb];
-      prodPz += pz;
-      if(qty > 0 || true){
-        rows_html += `<tr><td>${imb==='pz'?'Pezzi':imb+' pz'}</td><td>${qty}</td></tr>`;
-      }
+  function renderDateBlock(dateRows, sesDate){
+    const pzB  = calcPzForIdInRows('brioche',  dateRows);
+    const pzPa = calcPzForIdInRows('paffutella',dateRows);
+    const pzMg = calcPzForIdInRows('mini',     dateRows);
+    const pzM2 = pzMg/2;
+    const pzCh = calcPzForIdInRows('choco',    dateRows);
+    const pzPz = calcPzForIdInRows('panzotta', dateRows);
+    const pzMa = calcPzForIdInRows('mandorla', dateRows);
+    const pzLa = calcPzForIdInRows('lattante', dateRows);
+    const totImp = pzB + pzPa + pzM2;
+
+    // ── Summary cards ──
+    let h = `<div class="prod-summary-row no-print">`;
+    h += `<div class="prod-mini-card" style="border-color:var(--accent);">
+      <div class="prod-mini-label" style="background:var(--accent);">IMPASTATRICE</div>
+      <div class="prod-mini-val" style="color:var(--accent);">${fmtN(totImp)}</div>
+      <div class="prod-mini-sub">B:${pzB} Pa:${pzPa} M÷2:${fmtN(pzM2)}</div>
+    </div>`;
+    [
+      {label:'BRIOCHE',   val:pzB,  color:'#d4a800'},
+      {label:'PAFFUTELLA',val:pzPa, color:'#1a7a4a'},
+      {label:'MINI ÷2',  val:fmtN(pzM2),color:'#c0392b'},
+      {label:'CHOCO',    val:pzCh, color:'#6b3a1f'},
+      {label:'PANZOTTA', val:pzPz, color:'#7e3bb5'},
+      {label:'P.MANDORLA',val:pzMa,color:'#c47c00'},
+      {label:'P.LATTANTE',val:pzLa,color:'#1565a8'},
+    ].forEach(c=>{
+      h += `<div class="prod-mini-card">
+        <div class="prod-mini-label" style="background:${c.color};">${c.label}</div>
+        <div class="prod-mini-val">${c.val}</div>
+      </div>`;
     });
-    html += `<div class="prod-card">
-      <div class="prod-card-hdr">${esc(p.name)}</div>
-      <table>
-        <tr><th style="padding:4px 12px;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);background:var(--paper);">Formato</th>
-            <th style="padding:4px 12px;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);background:var(--paper);text-align:right;">Colli</th></tr>
-        ${rows_html}
-        <tr class="prod-tot-row"><td>TOTALE PEZZI</td><td>${prodPz}</td></tr>
+    h += `</div>`;
+
+    // ── Print summary ──
+    h += `<div class="print-summary print-only">
+      <table class="print-table">
+        <tr>
+          <th style="background:var(--accent);color:#fff;width:140px;">IMPASTATRICE TOTALE</th>
+          <td style="font-size:18px;font-weight:700;color:var(--accent);">${fmtN(totImp)} pz</td>
+          <th style="background:#d4a800;color:#fff;">BRIOCHE</th><td>${pzB}</td>
+          <th style="background:#1a7a4a;color:#fff;">PAFFUTELLA</th><td>${pzPa}</td>
+          <th style="background:#c0392b;color:#fff;">MINI ÷2</th><td>${fmtN(pzM2)}</td>
+          <th style="background:#6b3a1f;color:#fff;">CHOCO</th><td>${pzCh}</td>
+          <th style="background:#7e3bb5;color:#fff;">PANZOTTA</th><td>${pzPz}</td>
+        </tr>
       </table>
     </div>`;
-  });
 
-  html += `</div></div>`;
+    // ── Client table ──
+    h += `<div class="print-client-table">
+      <table class="print-table" style="width:100%;border-collapse:collapse;font-size:11px;">
+        <thead>
+          <tr>
+            <th style="min-width:160px;text-align:left;">CLIENTE</th>`;
 
-  html += `<div class="prod-section">
-    <h3>Dettaglio per cliente</h3>
-    <div class="grid-wrap" style="margin-top:0;">`;
+    // Only show products that have at least one order in this date
+    const activeProd = PRODUCTS.filter(p=>
+      dateRows.some(row=> p.imballi.some(imb=> parseInt((row.qtys||{})[p.id]?.[imb]||0)>0))
+    );
 
-  if((ses.rows||[]).length === 0){
-    html += '<div class="empty">Nessun ordine inserito.</div>';
-  } else {
-    let mini_head = `<table class="grid"><thead><tr>
-      <th class="left" style="left:0;z-index:15;min-width:180px;">CLIENTE</th>`;
-    PRODUCTS.forEach(p=>{ mini_head += `<th class="prod-header" colspan="${p.imballi.length+1}">${esc(p.name)}</th>`; });
-    mini_head += `<th class="tot-header">TOT PZ</th></tr><tr>
-      <th class="left" style="left:0;z-index:15;"></th>`;
-    PRODUCTS.forEach(p=>{
-      p.imballi.forEach(imb=>{ mini_head += `<th class="imballo-header">${imb}</th>`; });
-      mini_head += `<th class="imballo-header" style="color:#f5a58a;">TOT</th>`;
+    activeProd.forEach(p=>{
+      const bg = p.color;
+      h += `<th colspan="${p.imballi.length}" style="background:${bg};color:#fff;">${p.name}</th>`;
     });
-    mini_head += '</tr></thead><tbody>';
-
-    let mini_body = (ses.rows||[]).map(row=>{
-      let cells=''; let rowPz=0;
-      PRODUCTS.forEach(p=>{
-        let ppz=0;
-        p.imballi.forEach(imb=>{
-          const v=parseInt((row.qtys||{})[p.id]?.[imb]||0);
-          ppz+=v*p.pz_per_imballo[imb];
-          cells+=`<td style="text-align:center;font-family:var(--mono);font-size:12px;">${v||''}</td>`;
-        });
-        cells+=`<td class="tot-cell">${ppz||''}</td>`;
-        rowPz+=ppz;
+    h += `<th style="background:#333;color:#fff;">TOT PZ</th>
+            <th style="background:#2d4a6b;color:#fff;">CORRIERE</th>
+            <th style="background:#2d4a6b;color:#fff;min-width:100px;">NOTE</th>
+          </tr>
+          <tr>
+            <th></th>`;
+    activeProd.forEach(p=>{
+      const bg = p.color+'99';
+      p.imballi.forEach(imb=>{
+        const cellBg = (p.colorByImb&&p.colorByImb[imb]) ? p.colorByImb[imb]+'99' : bg;
+        h += `<th style="background:${cellBg};color:#fff;font-size:10px;">${imb}</th>`;
       });
-      return `<tr>
-        <td class="client-cell" style="font-size:12px;">${esc(row.clientNome||'')}</td>
-        ${cells}
-        <td class="tot-cell">${rowPz||''}</td>
-      </tr>`;
-    }).join('');
+    });
+    h += `<th></th><th></th><th></th></tr>
+        </thead>
+        <tbody>`;
 
-    html += mini_head + mini_body + '</tbody></table>';
+    let grandTotal = 0;
+    dateRows.forEach(row=>{
+      let rowPz = 0;
+      let cells = '';
+      activeProd.forEach(p=>{
+        p.imballi.forEach(imb=>{
+          const v = parseInt((row.qtys||{})[p.id]?.[imb]||0);
+          const cellBg = (p.colorLightByImb&&p.colorLightByImb[imb]) ? p.colorLightByImb[imb] : p.colorLight;
+          rowPz += v * p.pz_per_imballo[imb];
+          cells += `<td style="text-align:center;background:${cellBg};border:1px solid #ddd;">${v||''}</td>`;
+        });
+      });
+      grandTotal += rowPz;
+      const lav = row.dataLav ? `<span style="font-size:9px;color:#888;">Lav: ${fmtDate(row.dataLav)}</span>` : '';
+      const lottoTxt = row.lotto ? `<span style="font-size:9px;color:#888;"> · L.${row.lotto}</span>` : '';
+      h += `<tr>
+          <td style="border:1px solid #ddd;padding:3px 5px;">
+            ${row.clientCod?`<span style="font-size:9px;color:#999;display:block;">${esc(row.clientCod)}</span>`:''}
+            <strong>${esc(row.clientNome||'')}</strong>${lottoTxt}<br>${lav}
+          </td>
+          ${cells}
+          <td style="text-align:center;font-weight:700;border:1px solid #ddd;">${rowPz||''}</td>
+          <td style="text-align:center;border:1px solid #ddd;font-size:10px;font-weight:700;color:${row.corriere==='BRT'?'#c84b2f':row.corriere==='GLS'?'#2d5fa8':'#333'};">${row.corriere||''}</td>
+          <td style="border:1px solid #ddd;font-size:10px;padding:3px 5px;color:#555;">${esc(row.note||'')}</td>
+        </tr>`;
+    });
+
+    // Totals row
+    let totCells = '';
+    activeProd.forEach(p=>{
+      p.imballi.forEach(imb=>{
+        const tot = dateRows.reduce((s,row)=> s+parseInt((row.qtys||{})[p.id]?.[imb]||0),0);
+        const cellBg = (p.colorLightByImb&&p.colorLightByImb[imb]) ? p.colorLightByImb[imb] : p.colorLight;
+        totCells += `<td style="text-align:center;font-weight:700;background:${cellBg};border:1px solid #999;">${tot||''}</td>`;
+      });
+    });
+    h += `<tr style="background:#f0f0f0;">
+          <td style="font-weight:700;border:1px solid #999;padding:3px 5px;">TOTALE</td>
+          ${totCells}
+          <td style="text-align:center;font-weight:700;border:1px solid #999;">${grandTotal}</td>
+          <td style="border:1px solid #999;"></td><td style="border:1px solid #999;"></td>
+        </tr>`;
+
+    h += `</tbody></table></div>`;
+    return h;
   }
 
-  html += '</div></div>';
+  function fmtDate(d){ if(!d) return '—'; const [y,m,g]=d.split('-'); return g+'/'+m+'/'+y; }
 
-  document.getElementById('prodContent').innerHTML = html;
+  // ── Raggruppa tutte le sessioni per data ──
+  const byDate = {};
+  Object.values(orders).forEach(ses=>{
+    const date = ses.date || '__senza_data__';
+    if(!(ses.rows||[]).length) return;
+    if(!byDate[date]) byDate[date]=[];
+    ses.rows.forEach(row=>{ byDate[date].push(row); });
+  });
+
+  const sortedDates = Object.keys(byDate).sort((a,b)=>{
+    if(a==='__senza_data__') return 1;
+    if(b==='__senza_data__') return -1;
+    return a.localeCompare(b);
+  });
+
+  if(sortedDates.length===0){
+    el.innerHTML = '<div class="empty">Nessun ordine inserito.</div>';
+    return;
+  }
+
+  // Aggiorna il selettore date con le date disponibili
+  renderProdSessionSelector();
+  const selEl = document.getElementById('prodSessionSelector');
+  const filterDate = selEl ? selEl.value : '';
+
+  let html = '';
+  const datesToShow = filterDate ? [filterDate] : sortedDates;
+
+  datesToShow.forEach(dateKey=>{
+    const dateRows = byDate[dateKey];
+    if(!dateRows || dateRows.length===0) return;
+    const label = dateKey==='__senza_data__' ? 'Data spedizione non specificata' : fmtDate(dateKey);
+    const dow = dateKey!=='__senza_data__' ? ` — ${['Dom','Lun','Mar','Mer','Gio','Ven','Sab'][new Date(dateKey+'T00:00:00').getDay()]}` : '';
+
+    html += `<div class="prod-section print-section">
+      <div class="prod-date-header">
+        <h3>📅 Spedizione: <strong>${label}${dow}</strong>
+          <span style="font-family:var(--mono);font-size:11px;font-weight:400;color:var(--muted);margin-left:12px;">${dateRows.length} clienti</span>
+        </h3>
+      </div>
+      <div class="print-header print-only" style="margin-bottom:14px;border-bottom:2px solid #000;padding-bottom:8px;">
+        <strong style="font-family:Georgia,serif;font-size:16px;">Siculabrioche · Foglio di Produzione</strong><br>
+        <span style="font-size:13px;">Spedizione: <strong>${label}${dow}</strong> · ${dateRows.length} clienti</span>
+      </div>
+      ${renderDateBlock(dateRows, dateKey)}
+    </div>`;
+  });
+
+  if(!html) html = '<div class="empty">Nessun ordine per la data selezionata.</div>';
+  el.innerHTML = html;
 }
 
-// ══════════════════════════════════════════
-// ANAGRAFICA
-// ══════════════════════════════════════════
-let anagPage = 0;
-const ANAG_PAGE_SIZE = 100;
-let filteredClients = [];
+function renderProdSessionSelector(){
+  const sel = document.getElementById('prodSessionSelector');
+  if(!sel) return;
+
+  // Collect unique dates that have orders
+  const dateMap = {};
+  Object.values(orders).forEach(ses=>{
+    if(!(ses.rows||[]).length) return;
+    const d = ses.date || '__senza_data__';
+    if(!dateMap[d]) dateMap[d] = 0;
+    dateMap[d] += ses.rows.length;
+  });
+
+  const dates = Object.keys(dateMap).sort((a,b)=>{
+    if(a==='__senza_data__') return 1;
+    if(b==='__senza_data__') return -1;
+    return b.localeCompare(a); // newest first
+  });
+
+  const currentVal = sel.value;
+
+  sel.innerHTML = '<option value="">— Tutte le date —</option>' +
+    dates.map(d=>{
+      const label = d==='__senza_data__' ? 'Senza data' :
+        fmtDate(d) + ' · ' + ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'][new Date(d+'T00:00:00').getDay()];
+      return `<option value="${d}">${label} (${dateMap[d]} clienti)</option>`;
+    }).join('');
+
+  // Restore previous selection if still valid
+  if(currentVal && dateMap[currentVal]){
+    sel.value = currentVal;
+  }
+}
+
+// Stampa solo una data specifica
+function printDate(dateKey){
+  const sections = document.querySelectorAll('.prod-section');
+  sections.forEach(s=> s.classList.remove('print-active'));
+  sections.forEach(s=>{
+    const h = s.querySelector('.prod-date-header h3');
+    if(h && (dateKey==='__senza_data__' ? h.textContent.includes('non specificata') : h.textContent.includes(dateKey.split('-').reverse().join('/')))){
+      s.classList.add('print-active');
+    }
+  });
+  document.body.classList.add('printing-single');
+  window.print();
+  setTimeout(()=>{
+    document.body.classList.remove('printing-single');
+    sections.forEach(s=> s.classList.remove('print-active'));
+  }, 1000);
+}
+
 
 function renderAnagrafica(){
   const banner = document.getElementById('firstRunBanner');
@@ -900,6 +1412,44 @@ document.querySelectorAll('.tab').forEach(btn=>{
 // PDF
 document.getElementById('btnExportPdf').addEventListener('click', ()=>window.print());
 
+// Prod session selector
+document.getElementById('prodSessionSelector').addEventListener('change', ()=>{
+  renderProduzione();
+});
+document.getElementById('btnPrintProd').addEventListener('click', ()=>{
+  window.print();
+});
+
+// Backup / Restore
+document.getElementById('btnBackup').addEventListener('click', ()=>{
+  const blob = new Blob([JSON.stringify({orders, clients}, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download='ordini-backup-'+todayStr()+'.json';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+  flashMsg('Backup scaricato ✓');
+});
+document.getElementById('btnRestore').addEventListener('change', function(e){
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try{
+      const data = JSON.parse(ev.target.result);
+      if(data.clients && Array.isArray(data.clients)) clients = data.clients;
+      if(data.orders) orders = data.orders;
+      saveLocal();
+      ensureSession();
+      renderGrid();
+      renderProduzione();
+      renderAnagrafica();
+      flashMsg('Dati ripristinati ✓');
+    } catch(err){ alert('File non valido.'); }
+  };
+  reader.readAsText(file);
+  e.target.value='';
+});
+
 // target change
 document.getElementById('targetTotal')?.addEventListener('input', ()=>{
   renderGrid();
@@ -910,61 +1460,46 @@ document.getElementById('targetTotal')?.addEventListener('input', ()=>{
 document.getElementById('sessionDate').value = todayStr();
 
 // ══════════════════════════════════════════
-// FIREBASE
+// SALVATAGGIO LOCALE (localStorage)
+// Funziona aprendo il file direttamente dal computer
 // ══════════════════════════════════════════
-function toFB(){
-  return JSON.parse(JSON.stringify({ orders, clients }));
+const STORAGE_KEY = 'ordini_siculabrioche_v1';
+
+function saveLocal(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ orders, clients }));
+    setSyncStatus('ok','Salvato ✓');
+  } catch(e){
+    setSyncStatus('err','Errore salvataggio locale');
+  }
 }
 
-function fromFB(data){
-  if(!data) return;
-  if(data.clients && Array.isArray(data.clients)) clients = data.clients;
-  if(data.orders) orders = data.orders;
+function loadLocal(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const data = JSON.parse(raw);
+      if(data.clients && Array.isArray(data.clients)) clients = data.clients;
+      if(data.orders) orders = data.orders;
+      return true;
+    }
+  } catch(e){}
+  return false;
 }
 
-try {
-  if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-  db = firebase.database();
+notifyChange = () => { saveLocal(); };
 
-  let isSaving = false;
-
-  notifyChange = ()=>{
-    if(isRemoteUpdate) return;
-    setSyncStatus('saving','Salvataggio…');
-    if(saveDebounce) clearTimeout(saveDebounce);
-    saveDebounce = setTimeout(()=>{
-      isSaving = true;
-      db.ref('ordini_siculabrioche/v1').set(toFB())
-        .then(()=>{ setSyncStatus('ok','Sincronizzato ✓'); isSaving=false; })
-        .catch(()=>{ setSyncStatus('err','Errore salvataggio'); isSaving=false; });
-    }, 1000);
-  };
-
-  db.ref('ordini_siculabrioche/v1').on('value', snap=>{
-    // ignore echo of our own saves
-    if(isSaving) return;
-
-    isRemoteUpdate = true;
-    fromFB(snap.val());
-    document.getElementById('loading').classList.remove('vis');
-    setSyncStatus('ok','Connesso ✓');
-
-    ensureSession();
-    renderGrid();
-    renderProduzione();
-    renderAnagrafica();
-    setTimeout(()=>{ isRemoteUpdate=false; }, 0);
-  }, ()=>{
-    document.getElementById('loading').classList.remove('vis');
-    setSyncStatus('err','Connessione fallita');
-    renderGrid();
-  });
-
-} catch(err) {
-  document.getElementById('loading').classList.remove('vis');
-  setSyncStatus('err','Firebase error');
-  renderGrid();
-}
+// ── Init ──
+loadLocal();
+document.getElementById('loading').classList.remove('vis');
+setSyncStatus('ok','Locale · dati nel browser');
+ensureSession();
+renderSessionSelector();
+renderProdSessionSelector();
+renderGrid();
+renderProduzione();
+renderAnagrafica();
+updateBriocheCounter();
 </script>
 </body>
 </html>
