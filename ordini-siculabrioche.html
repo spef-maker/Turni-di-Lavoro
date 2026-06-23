@@ -308,8 +308,9 @@ table.anag tr:hover td{background:#faf8f4;}
       <label style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">
         Filtra per data lav.:
         <input type="date" id="gridFilterDateInput" style="padding:4px 7px;border:1px solid var(--line-strong);border-radius:var(--radius);font-size:12px;">
+        <button id="btnApplyGridFilter" style="padding:3px 8px;border:1px solid var(--green);border-radius:4px;background:var(--green);color:#fff;cursor:pointer;font-size:11px;font-weight:700;">Filtra</button>
       </label>
-      <button class="btn" id="btnClearGridFilter" style="font-size:11px;padding:3px 8px;">Mostra tutti</button>
+      <button class="btn" id="btnClearGridFilter" style="font-size:11px;padding:3px 8px;">✕ Tutti</button>
       <span id="gridFilterInfo" style="font-size:11px;color:var(--accent);font-weight:600;display:none;">⚠️ Filtro attivo — non tutti i clienti sono visibili</span>
     </div>
     <div id="noClientsBanner" style="display:none;background:#faf0d0;border:1px solid #c49a2a;border-radius:5px;padding:12px 16px;margin-bottom:14px;font-size:13px;">
@@ -2617,6 +2618,14 @@ document.getElementById('btnChangeOperator').addEventListener('click', ()=>{
 // ── Filtro data lavorazione in griglia ──
 document.getElementById('gridFilterDateInput').addEventListener('change', function(){
   gridFilterDate = this.value;
+  renderGrid();
+});
+document.getElementById('gridFilterDateInput').addEventListener('input', function(){
+  gridFilterDate = this.value;
+  renderGrid();
+});
+document.getElementById('btnApplyGridFilter').addEventListener('click', ()=>{
+  gridFilterDate = document.getElementById('gridFilterDateInput').value;
   renderGrid();
 });
 document.getElementById('btnClearGridFilter').addEventListener('click', ()=>{
