@@ -299,6 +299,18 @@ table.anag tr:hover td{background:#faf8f4;}
         <input type="date" id="sessionDate" style="padding:6px 8px;border:1px solid var(--line-strong);border-radius:var(--radius);font-size:13px;">
       </label>
     </div>
+    <!-- Barra operatore e filtro data lavorazione -->
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:7px 14px;background:#f5f5f5;border-bottom:1px solid var(--line);font-size:13px;">
+      <span id="operatorLabel" style="font-family:var(--mono);font-size:11px;color:var(--muted);">👤 <strong id="operatorName">—</strong></span>
+      <button class="btn" id="btnChangeOperator" style="font-size:11px;padding:3px 8px;">Cambia operatore</button>
+      <span style="border-left:1px solid var(--line);height:20px;margin:0 4px;"></span>
+      <label style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">
+        Filtra per data lav.:
+        <input type="date" id="gridFilterDateInput" style="padding:4px 7px;border:1px solid var(--line-strong);border-radius:var(--radius);font-size:12px;">
+      </label>
+      <button class="btn" id="btnClearGridFilter" style="font-size:11px;padding:3px 8px;">Mostra tutti</button>
+      <span id="gridFilterInfo" style="font-size:11px;color:var(--accent);font-weight:600;display:none;">⚠️ Filtro attivo — non tutti i clienti sono visibili</span>
+    </div>
     <div id="noClientsBanner" style="display:none;background:#faf0d0;border:1px solid #c49a2a;border-radius:5px;padding:12px 16px;margin-bottom:14px;font-size:13px;">
       ⚠️ <strong>Anagrafica vuota</strong> — Vai alla tab <strong>👥 Anagrafica</strong> e carica il file <code>clienti.csv</code> prima di inserire ordini.
     </div>
@@ -497,6 +509,8 @@ let clients = [];       // [{cod, nome}]
 let orders = {};        // sessionId → { date, rows: [{clientCod, clientNome, qtys:{brioche:{112:0,...},...}}] }
 let currentSession = null;
 let notifyChange = ()=>{};
+let currentOperator = '';  // nome operatore corrente
+let gridFilterDate = '';   // filtro data lavorazione nella griglia
 let anagPage = 0;
 const ANAG_PAGE_SIZE = 100;
 let filteredClients = [];
@@ -762,6 +776,7 @@ function renderGrid(){
     <th rowspan="2" style="min-width:90px;background:#2d4a6b;">CORRIERE</th>
     <th rowspan="2" style="min-width:150px;background:#2d4a6b;">NOTE</th>
     <th rowspan="2" style="min-width:160px;background:#4a2d6b;">PERSONALIZZAZIONE</th>
+    <th rowspan="2" style="min-width:80px;background:#2d4a2d;font-size:10px;">INSERITO DA</th>
     <th class="tot-header" rowspan="2">TOT PZ</th>
     <th class="diff-header" rowspan="2">DA PROD./VENDERE</th>
     <th rowspan="2"></th></tr>`;
@@ -779,6 +794,11 @@ function renderGrid(){
   let totalPz = 0;
   const colTotals = {}; // prodId → imballo → total
   PRODUCTS.forEach(p=>{ colTotals[p.id]={}; p.imballi.forEach(i=>colTotals[p.id][i]=0); colTotals[p.id]['_tot']=0; });
+
+  // Aggiorna info filtro
+  const filterInfo = document.getElementById('gridFilterInfo');
+  const filteredCount = gridFilterDate ? rows.filter(r=>(r.dataLav||r.dataRic||'')===gridFilterDate).length : rows.length;
+  if(filterInfo) filterInfo.style.display = gridFilterDate && filteredCount < rows.length ? 'inline' : 'none';
 
   let bodyRows = rows.map((row,ri)=>{
     let cells = '';
@@ -802,10 +822,20 @@ function renderGrid(){
     });
     totalPz += rowPz;
 
-    return `<tr data-ri="${ri}">
-      <td class="client-cell">
-        ${row.clientCod ? `<span style="font-family:var(--mono);font-size:10px;color:var(--muted);display:block;line-height:1.2;">${esc(row.clientCod)}</span>` : ''}
-        ${esc(row.clientNome||'')}
+    const hasPers = row.pers && row.pers.trim();
+    const rowBg = row.rowColor || (hasPers ? '#fffde6' : '');
+    const rowHidden = gridFilterDate && (row.dataLav||row.dataRic||'') !== gridFilterDate;
+    const trStyle = [rowBg?'background:'+rowBg:'', rowHidden?'display:none':''].filter(Boolean).join(';');
+    return `<tr data-ri="${ri}" ${trStyle?'style="'+trStyle+'"':''}>
+      <td class="client-cell" ${rowBg?'style="background:'+rowBg+';"':''}>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <button class="color-pick-btn" data-ri="${ri}" title="Colore riga" style="width:14px;height:14px;border-radius:50%;border:2px solid #ccc;background:${rowBg||'#fff'};cursor:pointer;padding:0;flex-shrink:0;"></button>
+          <div style="flex:1;min-width:0;">
+            ${row.clientCod ? `<span style="font-family:var(--mono);font-size:10px;color:var(--muted);display:block;line-height:1.2;">${esc(row.clientCod)}</span>` : ''}
+            ${esc(row.clientNome||'')}
+            ${row.operatore ? `<span style="font-size:9px;background:#4a2d6b;color:#fff;border-radius:3px;padding:1px 4px;margin-left:4px;vertical-align:middle;">${esc(row.operatore)}</span>` : ''}
+          </div>
+        </div>
       </td>
       ${cells}
       <td style="min-width:70px;background:#faf8f4;"><input type="text" class="meta-input lotto-input" data-ri="${ri}" data-field="lotto" value="${esc(row.lotto||'')}" placeholder="—" maxlength="20" style="width:65px;border:1px solid var(--line);border-radius:3px;padding:3px 5px;font-family:var(--mono);font-size:12px;text-align:center;background:transparent;"></td>
@@ -829,6 +859,7 @@ function renderGrid(){
         <input type="text" class="meta-input pers-input" data-ri="${ri}" data-field="pers" value="${esc(row.pers||'')}" placeholder="Cerca…" maxlength="60" autocomplete="off"
           style="width:155px;border:1px solid var(--line);border-radius:3px;padding:3px 6px;font-size:12px;background:transparent;">
       </td>
+      <td style="min-width:80px;background:#e8f0e8;text-align:center;font-family:var(--mono);font-size:11px;color:#2d4a2d;font-weight:600;">${esc(row.operatore||'')}</td>
       <td class="tot-cell" id="rtot-${ri}">${rowPz||''}</td>
       <td class="${rowPz>0?'diff-pos':'diff-zero'}" id="diff-${ri}">${rowPz||''}</td>
       <td><button class="btn sm" onclick="removeRow(${ri})" title="Elimina riga">🗑</button></td>
@@ -854,7 +885,7 @@ function renderGrid(){
       <tr class="grid-footer">
         <td class="client-cell">TOTALE ORDINI</td>
         ${footCells}
-        <td></td><td></td><td></td><td></td><td></td><td></td>
+        <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
         <td id="grand-total">${totalPz||''}</td>
         <td class="${diffClass}" id="grand-diff">${diffTxt}</td>
         <td></td>
@@ -914,6 +945,35 @@ function renderGrid(){
           moveFocus(e.target, -1, 0);
         }
       }
+    });
+  });
+
+  // Color picker per riga cliente
+  document.querySelectorAll('.color-pick-btn').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      e.stopPropagation();
+      // Rimuovi popup esistenti
+      document.querySelectorAll('.color-popup').forEach(p=>p.remove());
+      const ri = +btn.dataset.ri;
+      const popup = document.createElement('div');
+      popup.className='color-popup';
+      popup.style.cssText='position:absolute;z-index:500;background:#fff;border:1px solid #ccc;border-radius:8px;padding:8px;box-shadow:0 4px 16px rgba(0,0,0,.2);display:flex;gap:6px;flex-wrap:wrap;max-width:180px;';
+      ROW_COLORS.forEach(c=>{
+        const dot = document.createElement('button');
+        dot.title = c.label;
+        dot.style.cssText=`width:22px;height:22px;border-radius:50%;border:2px solid ${c.value?'#ccc':'#aaa'};background:${c.preview};cursor:pointer;padding:0;`;
+        dot.addEventListener('click', ()=>{
+          const ses = getSession();
+          if(ses.rows[ri]) ses.rows[ri].rowColor = c.value;
+          popup.remove();
+          renderGrid();
+          notifyChange();
+        });
+        popup.appendChild(dot);
+      });
+      btn.parentElement.style.position='relative';
+      btn.parentElement.appendChild(popup);
+      setTimeout(()=>document.addEventListener('click', ()=>popup.remove(), {once:true}), 10);
     });
   });
 
@@ -1163,7 +1223,8 @@ document.getElementById('btnConfirmAdd').addEventListener('click', ()=>{
   const defDataLav = document.getElementById('defaultDataLav')?.value || '';
 
   ses.rows.push({ id:uid(), clientCod:client.cod||'', clientNome:client.nome, qtys:{},
-    lotto: defLotto, dataRic: defDataRic, dataLav: defDataLav, corriere:'', note:'', pers:'' });
+    lotto: defLotto, dataRic: defDataRic, dataLav: defDataLav, corriere:'', note:'', pers:'',
+    operatore: currentOperator, rowColor:'' });
   document.getElementById('acInput').value='';
   selectedClient = null;
   acItems = [];
@@ -2454,6 +2515,114 @@ document.getElementById('anagUpload').addEventListener('change', function(e){
   e.target.value='';
 });
 
+// ── Operatore ──
+// ── Lista operatori salvata in localStorage ──
+function getOperatori(){
+  try{
+    const saved = localStorage.getItem('operatori_lista');
+    if(saved) return JSON.parse(saved);
+  } catch(e){}
+  return ['Fabio','Sara','Maria','Giulia','Anna'];
+}
+function saveOperatori(list){
+  try{ localStorage.setItem('operatori_lista', JSON.stringify(list)); } catch(e){}
+}
+
+// Colori disponibili per evidenziare il cliente
+const ROW_COLORS = [
+  { label:'Nessuno', value:'', preview:'#ffffff' },
+  { label:'Giallo',  value:'#fffde6', preview:'#f9e400' },
+  { label:'Verde',   value:'#e8f8e8', preview:'#4caf50' },
+  { label:'Azzurro', value:'#e3f0ff', preview:'#2196f3' },
+  { label:'Rosa',    value:'#fce8f0', preview:'#e91e8c' },
+  { label:'Arancio', value:'#fff3e0', preview:'#ff9800' },
+  { label:'Viola',   value:'#f3e8ff', preview:'#9c27b0' },
+];
+
+function askOperator(){
+  const saved = localStorage.getItem('operatore_corrente');
+  if(saved){ currentOperator = saved; document.getElementById('operatorName').textContent = saved; return; }
+
+  showOperatorDialog();
+}
+
+function showOperatorDialog(){
+  const operatori = getOperatori();
+  const dialog = document.createElement('div');
+  dialog.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:99999;display:flex;align-items:center;justify-content:center;';
+  dialog.innerHTML=`<div style="background:#fff;border-radius:10px;padding:28px 32px;max-width:400px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.3);text-align:center;">
+    <div style="font-size:32px;margin-bottom:8px;">👤</div>
+    <h3 style="font-family:Georgia,serif;font-size:20px;margin:0 0 6px;">Chi sei?</h3>
+    <p style="color:#888;font-size:13px;margin:0 0 16px;">Seleziona il tuo nome per tracciare chi inserisce gli ordini</p>
+    <div id="opList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;">
+      <input id="opNewInput" placeholder="Aggiungi nuovo nome…" style="flex:1;padding:8px;border:1px solid #ccc;border-radius:4px;font-size:13px;">
+      <button id="opAddBtn" style="padding:8px 12px;border:1px solid #4a2d6b;border-radius:4px;background:#4a2d6b;color:#fff;cursor:pointer;font-size:13px;">+ Aggiungi</button>
+    </div>
+    <p style="font-size:11px;color:#bbb;margin:0;">Clicca 🗑 per rimuovere un nome dalla lista</p>
+  </div>`;
+  document.body.appendChild(dialog);
+
+  function renderOpList(){
+    const ops = getOperatori();
+    const list = dialog.querySelector('#opList');
+    list.innerHTML = ops.map((n,i)=>`
+      <div style="display:flex;gap:6px;align-items:center;">
+        <button class="op-sel-btn" data-name="${esc(n)}" style="flex:1;padding:10px;border:2px solid #e0e0e0;border-radius:6px;background:#fff;cursor:pointer;font-size:14px;font-weight:600;text-align:left;">${esc(n)}</button>
+        <button class="op-del-btn" data-i="${i}" style="padding:8px;border:1px solid #eee;border-radius:4px;background:#fff;cursor:pointer;font-size:13px;color:#c0392b;">🗑</button>
+      </div>`).join('');
+
+    list.querySelectorAll('.op-sel-btn').forEach(btn=>btn.addEventListener('click',()=>setOp(btn.dataset.name)));
+    list.querySelectorAll('.op-del-btn').forEach(btn=>btn.addEventListener('click',()=>{
+      const ops2 = getOperatori();
+      ops2.splice(+btn.dataset.i, 1);
+      saveOperatori(ops2);
+      renderOpList();
+    }));
+  }
+  renderOpList();
+
+  function setOp(name){
+    currentOperator = name;
+    localStorage.setItem('operatore_corrente', name);
+    document.getElementById('operatorName').textContent = name;
+    dialog.remove();
+  }
+
+  dialog.querySelector('#opAddBtn').addEventListener('click',()=>{
+    const v = dialog.querySelector('#opNewInput').value.trim();
+    if(!v) return;
+    const ops = getOperatori();
+    if(!ops.includes(v)){ ops.push(v); saveOperatori(ops); }
+    dialog.querySelector('#opNewInput').value='';
+    renderOpList();
+  });
+  dialog.querySelector('#opNewInput').addEventListener('keydown',e=>{
+    if(e.key==='Enter'){
+      const v=e.target.value.trim();
+      if(v){ const ops=getOperatori(); if(!ops.includes(v)){ops.push(v);saveOperatori(ops);} e.target.value=''; renderOpList(); }
+    }
+  });
+}
+
+document.getElementById('btnChangeOperator').addEventListener('click', ()=>{
+  localStorage.removeItem('operatore_corrente');
+  currentOperator='';
+  document.getElementById('operatorName').textContent='—';
+  showOperatorDialog();
+});
+
+// ── Filtro data lavorazione in griglia ──
+document.getElementById('gridFilterDateInput').addEventListener('change', function(){
+  gridFilterDate = this.value;
+  renderGrid();
+});
+document.getElementById('btnClearGridFilter').addEventListener('click', ()=>{
+  gridFilterDate='';
+  document.getElementById('gridFilterDateInput').value='';
+  renderGrid();
+});
+
 // ── Init ──
 loadLocal(); // carica dati locali subito (evita schermata vuota)
 cleanEmptySessions();
@@ -2465,6 +2634,7 @@ renderAnagrafica();
 updateBriocheCounter();
 scheduleAutoBackup(); // avvia backup automatico 8:30 e 17:30
 initFirebase(); // poi sincronizza con Firebase
+askOperator();
 </script>
 </body>
 </html>
