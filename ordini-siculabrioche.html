@@ -2213,14 +2213,15 @@ document.getElementById('btnRestore').addEventListener('change', function(e){
 });
 
 document.getElementById('btnNewSession').addEventListener('click', ()=>{
-  // Usa sempre la data di oggi come default per la nuova sessione
   const today = todayStr();
-  const sessionDateEl = document.getElementById('sessionDate');
-  sessionDateEl.value = today; // imposta il campo data a oggi
   const date = today;
   if(!confirm(`Avviare una nuova sessione per il ${fmtDateSimple(date)}?\nLa sessione corrente viene conservata.`)) return;
+  // Crea la nuova sessione
   currentSession = 'ses_'+date.replace(/-/g,'')+'_'+Math.random().toString(36).slice(2,6);
   orders[currentSession] = { date, rows:[] };
+  // Aggiorna il campo data DOPO aver cambiato currentSession, senza triggare il listener
+  const sessionDateEl = document.getElementById('sessionDate');
+  sessionDateEl.value = date;
   renderSessionSelector();
   renderGrid();
   renderProduzione();
@@ -2350,11 +2351,12 @@ document.getElementById('sessionDate').addEventListener('change', ()=>{
   const date = document.getElementById('sessionDate').value;
   if(!date) return;
   // Cerca sessione esistente per questa data
-  const existing = Object.keys(orders).find(k=>orders[k].date===date);
+  const existing = Object.keys(orders).find(k=>orders[k].date===date && k!==currentSession);
   if(existing){
+    // Passa alla sessione esistente con questa data
     currentSession = existing;
   } else {
-    // Aggiorna la data della sessione corrente (non crearne una nuova)
+    // Aggiorna SOLO la data della sessione corrente, non toccare le altre
     if(currentSession && orders[currentSession]){
       orders[currentSession].date = date;
     } else {
