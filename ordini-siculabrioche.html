@@ -473,7 +473,7 @@ const firebaseConfig = {
 // ══════════════════════════════════════════
 // PRODOTTI + IMBALLI
 // ══════════════════════════════════════════
-let PERSONALIZZAZIONI = ["Francese","Spagnola","Tedesco","Inglese","Rumena","Polacco","Romana","Cartone Neutro","Briosce chiare","120 Giorni","AntonioSabato","Anzile","AranciaDOOC","Australia","BaciSottozero","ConoArtic","DeltItalia","DolceVita","DonCannolo","DonGelato","Elios","EtnaFood","Fainello","FoodInSicily","Frisenda","GelatoSicily","GeloDOC","Gioventi","Gocce","GranitaDiBiancaFra","Ice&Co","Il Pane","IlPistacchio","InterFood","LaMadia","L'Uliveto","Maison Belli","MastroPistacchio","Mirtillo","Mister Mukka","Muno","Nonna Maria","Puro","Sabadi'","SanoSiciliano","Scalcione","Seminara","SiciliaGeneral","Sicilu","SicilyAddict","SigiGel","Soldano","Spa Amor Gelato","Tentazioni","VerySicily","Vucciri","Yo.Pi"];
+let PERSONALIZZAZIONI = ["Francese","Spagnola","Tedesco","Inglese","Rumena","Polacco","Romana","Romana Cioccolato","Cartone Neutro","Briosce chiare","120 Giorni","AntonioSabato","Anzile","AranciaDOOC","Australia","BaciSottozero","ConoArtic","DeltItalia","DolceVita","DonCannolo","DonGelato","Elios","EtnaFood","Fainello","FoodInSicily","Frisenda","GelatoSicily","GeloDOC","Gioventi","Gocce","GranitaDiBiancaFra","Ice&Co","Il Pane","IlPistacchio","InterFood","LaMadia","L'Uliveto","Maison Belli","MastroPistacchio","Mirtillo","Mister Mukka","Muno","Nonna Maria","Puro","Sabadi'","SanoSiciliano","Scalcione","Seminara","SiciliaGeneral","Sicilu","SicilyAddict","SigiGel","Soldano","Spa Amor Gelato","Tentazioni","VerySicily","Vucciri","Yo.Pi"];
 const IMBALLO_LABELS = { gross8:'GR.8', camp:'CAMP.', pz:'PZ' };
 function imbLabel(imb){ return IMBALLO_LABELS[imb] || imb; }
 
@@ -864,8 +864,11 @@ function renderGrid(){
         <input type="text" class="meta-input note-input" data-ri="${ri}" data-field="note" value="${esc(row.note||'')}" placeholder="Note…" maxlength="120" style="width:145px;border:1px solid var(--line);border-radius:3px;padding:3px 6px;font-size:12px;background:transparent;">
       </td>
       <td style="min-width:160px;background:#f0ebf8;position:relative;">
-        <input type="text" class="meta-input pers-input" data-ri="${ri}" data-field="pers" value="${esc(row.pers||'')}" placeholder="Cerca…" maxlength="60" autocomplete="off"
-          style="width:155px;border:1px solid var(--line);border-radius:3px;padding:3px 6px;font-size:12px;background:transparent;">
+        <div style="display:flex;align-items:center;gap:2px;">
+          <input type="text" class="meta-input pers-input" data-ri="${ri}" data-field="pers" value="${esc(row.pers||'')}" placeholder="Cerca…" maxlength="60" autocomplete="off"
+            style="flex:1;min-width:0;border:1px solid var(--line);border-radius:3px;padding:3px 6px;font-size:12px;background:transparent;">
+          ${row.pers ? `<button class="pers-clear-btn" data-ri="${ri}" title="Rimuovi personalizzazione" style="border:none;background:none;cursor:pointer;color:#c0392b;font-size:14px;padding:0 3px;line-height:1;">×</button>` : ''}
+        </div>
       </td>
       <td style="min-width:80px;background:#e8f0e8;text-align:center;font-family:var(--mono);font-size:11px;color:#2d4a2d;font-weight:600;">${esc(row.operatore||'')}</td>
       <td style="min-width:140px;background:#f5f0e8;position:relative;">
@@ -1002,6 +1005,19 @@ function renderGrid(){
       if(ses.rows[ri]) ses.rows[ri][field] = e.target.value;
       if(document.getElementById("tab-produzione").classList.contains("active")) renderProduzione();
       notifyChange();
+    });
+  });
+
+  // Pulsante X per cancellare personalizzazione
+  document.querySelectorAll('.pers-clear-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const ri = +btn.dataset.ri;
+      const ses = getSession();
+      if(ses.rows[ri]){
+        ses.rows[ri].pers = '';
+        renderGrid();
+        notifyChange();
+      }
     });
   });
 
@@ -1756,6 +1772,19 @@ function renderStorico(clientCod, clientNome){
 // ══════════════════════════════════════════
 // CONFEZIONAMENTO
 // ══════════════════════════════════════════
+// Mappa shelf-life per personalizzazione (sovrascrive i default)
+const SHELF_LIFE_MAP = {
+  'francese': 120, 'spagnola': 120, 'tedesco': 120, 'inglese': 120, 'rumena': 120, 'polacco': 120,
+  'romana cioccolato': 45, 'la romana cioccolato': 45,
+  'romana': 90, 'la romana': 90,
+  '120 giorni': 120,
+};
+
+function getShelfLife(pers){
+  if(!pers) return 90;
+  return SHELF_LIFE_MAP[pers.toLowerCase().trim()] || 90;
+}
+
 const ESTERO_PERS = ['francese','spagnola','tedesco','inglese','rumena','polacco'];
 
 function calcScadenza(row){
@@ -2489,7 +2518,7 @@ document.getElementById('btnAddPers').addEventListener('click', ()=>{
   PERSONALIZZAZIONI.sort((a,b)=>a.localeCompare(b));
   // Salva in localStorage
   try{
-    const base = ["Francese","Spagnola","Tedesco","Inglese","Rumena","Polacco","Romana","Cartone Neutro","120 Giorni","AntonioSabato","Anzile","AranciaDOOC","Australia","BaciSottozero","ConoArtic","DeltItalia","DolceVita","DonCannolo","DonGelato","Elios","EtnaFood","Fainello","FoodInSicily","Frisenda","GelatoSicily","GeloDOC","Gioventi","Gocce","GranitaDiBiancaFra","Ice&Co","Il Pane","IlPistacchio","InterFood","LaMadia","L'Uliveto","Maison Belli","MastroPistacchio","Mirtillo","Mister Mukka","Muno","Nonna Maria","Puro","Sabadi'","SanoSiciliano","Scalcione","Seminara","SiciliaGeneral","Sicilu","SicilyAddict","SigiGel","Soldano","Spa Amor Gelato","Tentazioni","VerySicily","Vucciri","Yo.Pi"];
+    const base = ["Francese","Spagnola","Tedesco","Inglese","Rumena","Polacco","Romana","Romana Cioccolato","Cartone Neutro","120 Giorni","AntonioSabato","Anzile","AranciaDOOC","Australia","BaciSottozero","ConoArtic","DeltItalia","DolceVita","DonCannolo","DonGelato","Elios","EtnaFood","Fainello","FoodInSicily","Frisenda","GelatoSicily","GeloDOC","Gioventi","Gocce","GranitaDiBiancaFra","Ice&Co","Il Pane","IlPistacchio","InterFood","LaMadia","L'Uliveto","Maison Belli","MastroPistacchio","Mirtillo","Mister Mukka","Muno","Nonna Maria","Puro","Sabadi'","SanoSiciliano","Scalcione","Seminara","SiciliaGeneral","Sicilu","SicilyAddict","SigiGel","Soldano","Spa Amor Gelato","Tentazioni","VerySicily","Vucciri","Yo.Pi"];
     const extras = PERSONALIZZAZIONI.filter(p=>!base.includes(p));
     localStorage.setItem('pers_custom', JSON.stringify(extras));
   } catch(e){}
