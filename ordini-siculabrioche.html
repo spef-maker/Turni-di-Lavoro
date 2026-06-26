@@ -1902,13 +1902,22 @@ function renderConfezionamento(){
     const label = dateKey==='__senza_data__' ? 'Data non specificata' : fmtDateConf(dateKey);
     const dow = dateKey!=='__senza_data__' ? ' — '+['Dom','Lun','Mar','Mer','Gio','Ven','Sab'][new Date(dateKey+'T00:00:00').getDay()] : '';
 
-    // ── Raggruppa per etichetta (nazionalità/tipo) ──
+    // ── Raggruppa per etichetta: una riga per etichetta con totale pz ──
     const byLabel = {};
     rows.forEach(row=>{
       const scs = calcScadenza(row);
+      // Calcola pz totali della riga
+      let rowPz = 0;
+      PRODUCTS.forEach(p=>{ p.imballi.forEach(imb=>{ rowPz += parseInt((row.qtys||{})[p.id]?.[imb]||0)*p.pz_per_imballo[imb]; }); });
       scs.forEach(sc=>{
-        if(!byLabel[sc.etichetta]) byLabel[sc.etichetta] = { giorni: sc.giorni, rows: [] };
-        byLabel[sc.etichetta].rows.push(row);
+        if(!byLabel[sc.etichetta]){
+          byLabel[sc.etichetta] = { giorni: sc.giorni, rows: [], totPz: 0 };
+        }
+        // Evita di aggiungere la stessa riga più volte per la stessa etichetta
+        if(!byLabel[sc.etichetta].rows.includes(row)){
+          byLabel[sc.etichetta].rows.push(row);
+          byLabel[sc.etichetta].totPz += rowPz;
+        }
       });
     });
 
@@ -1934,10 +1943,25 @@ function renderConfezionamento(){
     });
     // Campionatura totale = GR.8 × 8 + campionature dirette
     const campTotConf = (imballiTot.gross8 * 8) + imballiTot.camp;
-    // Romana Mini va sempre negli imballi neutri DA 26
-    const pzRoMiniConf = rows.reduce((acc,row)=>
-      acc + parseInt((row.qtys||{})['romanamini']?.['26']||0), 0);
-    imballiNeutri[26] += pzRoMiniConf;
+    // Romana, Romana Choco, Romana Mini → sempre neutri, spostarli da imballiTot a imballiNeutri
+    ['romana','romanachoco','romanamini'].forEach(pid=>{
+      rows.forEach(row=>{
+        const v = parseInt((row.qtys||{})[pid]?.['26']||0);
+        if(v===0) return;
+        // Se era finito in imballiTot (perché hasPers=false), spostalo in neutri
+        imballiNeutri[26] += v;
+        imballiTot[26] = Math.max(0, imballiTot[26] - v);
+      });
+      // per romana ha anche 52
+      if(pid==='romana'){
+        rows.forEach(row=>{
+          const v52 = parseInt((row.qtys||{})[pid]?.['52']||0);
+          if(v52===0) return;
+          imballiNeutri[52] += v52;
+          imballiTot[52] = Math.max(0, imballiTot[52] - v52);
+        });
+      }
+    });
 
     html += `<div class="prod-section print-section">
       <div class="prod-date-header">
@@ -1973,10 +1997,7 @@ function renderConfezionamento(){
     sortedLabels.forEach(lab=>{
       const group = byLabel[lab];
       const scadenza = addDays(dateKey, group.giorni);
-      let totPzLabel = 0;
-      group.rows.forEach(row=>{
-        PRODUCTS.forEach(p=>{ p.imballi.forEach(imb=>{ totPzLabel += parseInt((row.qtys||{})[p.id]?.[imb]||0)*p.pz_per_imballo[imb]; }); });
-      });
+      let totPzLabel = group.totPz || 0;
       const isStandard = lab==='SICULABRIOSCE STANDARD';
       html += `<tr style="border-bottom:1px solid var(--line);${isStandard?'background:#faf8f4;':''}">
         <td style="padding:6px 10px;font-family:var(--mono);font-size:11px;">${fmtDateConf(dateKey)}</td>
@@ -2551,7 +2572,10 @@ document.getElementById('btnAddPers').addEventListener('click', ()=>{
           <h3 style="margin:0;font-family:Georgia,serif;font-size:18px;">🏷 Anagrafica personalizzazioni</h3>
           <p style="margin:4px 0 0;font-size:12px;color:#888;">Gestisci nomi e shelf-life. I giorni vengono usati automaticamente nel Confezionamento.</p>
         </div>
-        <button id="persAnagClose" style="border:none;background:none;font-size:22px;cursor:pointer;color:#888;padding:0 4px;">×</button>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button id="persAnagRefresh" style="padding:6px 12px;border:1px solid #1a7a4a;border-radius:5px;background:#1a7a4a;color:#fff;cursor:pointer;font-size:12px;font-weight:700;">🔄 Riaggiorna ordini</button>
+          <button id="persAnagClose" style="border:none;background:none;font-size:22px;cursor:pointer;color:#888;padding:0 4px;">×</button>
+        </div>
       </div>
       <div style="overflow-y:auto;flex:1;padding:16px 24px;">
         <table style="width:100%;border-collapse:collapse;font-size:13px;" id="persAnagTable">
@@ -2674,6 +2698,12 @@ document.getElementById('btnAddPers').addEventListener('click', ()=>{
 
   document.getElementById('persAnagNewNome').addEventListener('keydown', e=>{
     if(e.key==='Enter') document.getElementById('persAnagAdd').click();
+  });
+
+  document.getElementById('persAnagRefresh').addEventListener('click', ()=>{
+    renderConfezionamento();
+    renderProduzione();
+    flashMsg('✓ Confezionamento e Produzione aggiornati');
   });
 
   document.getElementById('persAnagClose').addEventListener('click', ()=>dialog.remove());
