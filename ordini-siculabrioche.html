@@ -351,7 +351,7 @@ table.anag tr:hover td{background:#faf8f4;}
             style="padding:5px 7px;border:1px solid #d4a800;border-radius:4px;font-size:12px;background:#fff;">
         </label>
         <button class="btn" id="btnApplyDefaults" style="font-size:12px;padding:5px 10px;">↓ Applica a tutte le righe</button>
-        <button class="btn" id="btnAddPers" style="font-size:12px;padding:5px 10px;background:#4a2d6b;color:#fff;border-color:#4a2d6b;">+ Personalizzazione</button>
+        <button class="btn" id="btnAddPers" style="font-size:12px;padding:5px 10px;background:#4a2d6b;color:#fff;border-color:#4a2d6b;">🏷 Gestisci personalizzazioni</button>
       </div>
     </div>
 
@@ -487,6 +487,7 @@ const PRODUCTS = [
   { id:'choco',      name:'BRIOSCIA CHOCO',    imballi:[112,52,26],           pz_per_imballo:{112:112,52:52,26:26},                  unit:'imballi', color:'#6b3a1f', colorLight:'#f5ece6' },
   { id:'romana',     name:'BRIOSCIA ROMANA',   imballi:[52],                  pz_per_imballo:{52:52},                               unit:'imballi', color:'#b5451b', colorLight:'#fce8e0' },
   { id:'romanachoco',name:'ROMANA CHOCO',       imballi:[26],                  pz_per_imballo:{26:26},                               unit:'imballi', color:'#7a2e10', colorLight:'#f7ddd5' },
+  { id:'romanamini', name:'ROMANA MINI',        imballi:[26],                  pz_per_imballo:{26:26},                               unit:'imballi', color:'#c0602a', colorLight:'#fde8d8' },
   { id:'grosse48',   name:'GROSSE 105g',        imballi:[48,90],               pz_per_imballo:{48:48,90:90},                         unit:'imballi', color:'#b87c1a', colorLight:'#fdf0d0' },
   { id:'minipaf',    name:'MINI PAFFUTELLE',     imballi:[112],                 pz_per_imballo:{112:112},                             unit:'imballi', color:'#27a060', colorLight:'#d0f0e0' },
   { id:'babybrioche',name:'BABY BRIOSCE',        imballi:[112],                 pz_per_imballo:{112:112},                             unit:'imballi', color:'#e06030', colorLight:'#fde0d0' },
@@ -782,8 +783,6 @@ function renderGrid(){
     <th rowspan="2" style="min-width:150px;background:#2d4a6b;">NOTE</th>
     <th rowspan="2" style="min-width:160px;background:#4a2d6b;">PERSONALIZZAZIONE</th>
     <th rowspan="2" style="min-width:80px;background:#2d4a2d;font-size:10px;">INSERITO DA</th>
-    <th rowspan="2" style="min-width:140px;background:#5a4a2d;font-size:10px;">DESC. AGGIUNTIVA</th>
-    <th rowspan="2" style="min-width:70px;background:#5a4a2d;font-size:10px;">SHELF gg</th>
     <th class="tot-header" rowspan="2">TOT PZ</th>
     <th class="diff-header" rowspan="2">DA PROD./VENDERE</th>
     <th rowspan="2"></th></tr>`;
@@ -871,14 +870,6 @@ function renderGrid(){
         </div>
       </td>
       <td style="min-width:80px;background:#e8f0e8;text-align:center;font-family:var(--mono);font-size:11px;color:#2d4a2d;font-weight:600;">${esc(row.operatore||'')}</td>
-      <td style="min-width:140px;background:#f5f0e8;position:relative;">
-        <input type="text" class="meta-input" data-ri="${ri}" data-field="descExtra" value="${esc(row.descExtra||'')}" placeholder="es. Panzotta…" maxlength="60"
-          style="width:135px;border:1px solid var(--line);border-radius:3px;padding:3px 6px;font-size:11px;background:transparent;">
-      </td>
-      <td style="min-width:70px;background:#f5f0e8;">
-        <input type="number" class="meta-input" data-ri="${ri}" data-field="shelfExtra" value="${esc(row.shelfExtra||'')}" placeholder="gg" min="1" max="999"
-          style="width:60px;border:1px solid var(--line);border-radius:3px;padding:3px 6px;font-size:11px;background:transparent;text-align:center;">
-      </td>
       <td class="tot-cell" id="rtot-${ri}">${rowPz||''}</td>
       <td class="${rowPz>0?'diff-pos':'diff-zero'}" id="diff-${ri}">${rowPz||''}</td>
       <td><button class="btn sm" onclick="removeRow(${ri})" title="Elimina riga">🗑</button></td>
@@ -904,7 +895,7 @@ function renderGrid(){
       <tr class="grid-footer">
         <td class="client-cell">TOTALE ORDINI</td>
         ${footCells}
-        <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+        <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
         <td id="grand-total">${totalPz||''}</td>
         <td class="${diffClass}" id="grand-diff">${diffTxt}</td>
         <td></td>
@@ -1391,6 +1382,7 @@ function renderProduzione(){
     const pzCh = calcPz('choco',     rows);
     const pzRo = calcPz('romana',    rows);
     const pzRoCh = calcPz('romanachoco', rows);
+     const pzRoMini = calcPz('romanamini', rows);
     const pzGrosse = calcPz('grosse48',  rows);
     const pzMiniPaf = calcPz('minipaf',  rows);
     const pzBabyB = calcPz('babybrioche',rows);
@@ -1424,8 +1416,8 @@ function renderProduzione(){
     // IMPASTATRICE = Brioche + Paffutella + Mini÷2 + Grosse + MiniPaf + BabyBrioche + BabyPaf
     const totImp = pzB + pzPa + pzM2 + pzGrosse + pzMiniPaf + pzBabyB + pzBabyP + pzSabluB + Math.floor(pzSabluM/2) + pzSabluPa;
     const kgBrioche = Math.ceil(totImp / 25 / 5) * 5;
-    const totRomana = pzRo;
-    const kgRomana = Math.ceil(pzRo / 25 / 5) * 5;
+     const totRomana = pzRo + Math.floor(pzRoMini / 2);
+     const kgRomana = Math.ceil(totRomana / 25 / 5) * 5;
 
     // cards riepilogo — RIGA 1: Pallet e Kg (dati operativi principali)
     let cards = `<div class="prod-summary-row no-print" style="margin-bottom:8px;">`;
@@ -1442,7 +1434,7 @@ function renderProduzione(){
     cards += `<div class="prod-mini-card" style="border:2px solid #7a5a9a;">
       <div class="prod-mini-label" style="background:#7a5a9a;">KG ROMANA</div>
       <div class="prod-mini-val" style="color:#7a5a9a;">${kgRomana}</div>
-      <div class="prod-mini-sub">÷ 25</div>
+      <div class="prod-mini-sub">Ro:${pzRo} +Mini÷2:${Math.floor(pzRoMini/2)}</div>
     </div>`;
 
     if(palletBRT > 0) cards += `<div class="prod-mini-card" style="border:2px solid #c84b2f;">
@@ -1462,6 +1454,7 @@ function renderProduzione(){
     [{id:'brioche',l:'BRIOSCIA',c:'#d4a800'},{id:'paffutella',l:'PAFFUTELLA',c:'#1a7a4a'},
      {id:'mini',l:'MINI ÷2',c:'#c0392b',div2:true},{id:'choco',l:'CHOCO',c:'#6b3a1f'},
      {id:'romana',l:'ROMANA',c:'#b5451b'},{id:'romanachoco',l:'ROMANA CH.',c:'#7a2e10'},
+     {id:'romanamini',l:'ROMANA MINI',c:'#c0602a'},
      {id:'grosse48',l:'GROSSE 105g',c:'#b87c1a'},{id:'minipaf',l:'MINI PAF.',c:'#27a060'},
      {id:'babybrioche',l:'BABY BRIOC.',c:'#e06030'},{id:'babypaf',l:'BABY PAF.',c:'#208050'},
      {id:'sablu_brioche',l:'SABLU B.',c:'#d4a800'},{id:'sablu_mini',l:'SABLU M.',c:'#c0392b'},
@@ -1782,7 +1775,36 @@ const SHELF_LIFE_MAP = {
 
 function getShelfLife(pers){
   if(!pers) return 90;
+  // Prima controlla anagrafica personalizzazioni (localStorage)
+  const anag = getPersAnagrafica();
+  const found = anag.find(p=>p.nome.toLowerCase()===pers.toLowerCase().trim());
+  if(found && found.giorni) return found.giorni;
+  // Fallback alla mappa statica
   return SHELF_LIFE_MAP[pers.toLowerCase().trim()] || 90;
+}
+
+function getPersAnagrafica(){
+  try{
+    const saved = localStorage.getItem('pers_anagrafica');
+    if(saved) return JSON.parse(saved);
+  } catch(e){}
+  // Default: build from PERSONALIZZAZIONI + SHELF_LIFE_MAP
+  return PERSONALIZZAZIONI.map(nome=>({
+    nome,
+    giorni: SHELF_LIFE_MAP[nome.toLowerCase()] || 90
+  }));
+}
+
+function savePersAnagrafica(list){
+  try{
+    localStorage.setItem('pers_anagrafica', JSON.stringify(list));
+    // Aggiorna anche PERSONALIZZAZIONI
+    PERSONALIZZAZIONI = list.map(p=>p.nome);
+    // Aggiorna localStorage custom (per compatibilità)
+    const base = ["Francese","Spagnola","Tedesco","Inglese","Rumena","Polacco","Romana","Romana Cioccolato","Cartone Neutro","Briosce chiare","120 Giorni"];
+    const extras = list.map(p=>p.nome).filter(n=>!base.includes(n));
+    localStorage.setItem('pers_custom', JSON.stringify(extras));
+  } catch(e){}
 }
 
 const ESTERO_PERS = ['francese','spagnola','tedesco','inglese','rumena','polacco'];
@@ -1831,10 +1853,13 @@ function calcScadenza(row){
 }
 
 function addDays(dateStr, days){
-  if(!dateStr) return '';
-  const d = new Date(dateStr+'T00:00:00');
-  d.setDate(d.getDate()+days);
-  return d.toISOString().slice(0,10);
+  if(!dateStr || dateStr==='__senza_data__') return '';
+  try{
+    const d = new Date(dateStr+'T00:00:00');
+    if(isNaN(d.getTime())) return '';
+    d.setDate(d.getDate()+days);
+    return d.toISOString().slice(0,10);
+  } catch(e){ return ''; }
 }
 
 function fmtDateConf(d){
@@ -1896,6 +1921,7 @@ function renderConfezionamento(){
       const isEstero = ESTERO_PERS.includes(persLower);
       const hasPers = row.pers && row.pers.trim() && !isEstero;
       PRODUCTS.forEach(p=>{
+        if(p.id === 'romanamini') return; // gestita separatamente sotto
         p.imballi.forEach(imb=>{
           const v = parseInt((row.qtys||{})[p.id]?.[imb]||0);
           if(v === 0) return;
@@ -1909,6 +1935,10 @@ function renderConfezionamento(){
     });
     // Campionatura totale = GR.8 × 8 + campionature dirette
     const campTotConf = (imballiTot.gross8 * 8) + imballiTot.camp;
+    // Romana Mini va sempre negli imballi neutri DA 26
+    const pzRoMiniConf = rows.reduce((acc,row)=>
+      acc + parseInt((row.qtys||{})['romanamini']?.['26']||0), 0);
+    imballiNeutri[26] += pzRoMiniConf;
 
     html += `<div class="prod-section print-section">
       <div class="prod-date-header">
@@ -2510,20 +2540,147 @@ try{
 } catch(e){}
 
 document.getElementById('btnAddPers').addEventListener('click', ()=>{
-  const nome = prompt('Nome nuova personalizzazione:');
-  if(!nome || !nome.trim()) return;
-  const trimmed = nome.trim();
-  if(PERSONALIZZAZIONI.includes(trimmed)){ alert('Esiste già.'); return; }
-  PERSONALIZZAZIONI.push(trimmed);
-  PERSONALIZZAZIONI.sort((a,b)=>a.localeCompare(b));
-  // Salva in localStorage
-  try{
-    const base = ["Francese","Spagnola","Tedesco","Inglese","Rumena","Polacco","Romana","Romana Cioccolato","Cartone Neutro","120 Giorni","AntonioSabato","Anzile","AranciaDOOC","Australia","BaciSottozero","ConoArtic","DeltItalia","DolceVita","DonCannolo","DonGelato","Elios","EtnaFood","Fainello","FoodInSicily","Frisenda","GelatoSicily","GeloDOC","Gioventi","Gocce","GranitaDiBiancaFra","Ice&Co","Il Pane","IlPistacchio","InterFood","LaMadia","L'Uliveto","Maison Belli","MastroPistacchio","Mirtillo","Mister Mukka","Muno","Nonna Maria","Puro","Sabadi'","SanoSiciliano","Scalcione","Seminara","SiciliaGeneral","Sicilu","SicilyAddict","SigiGel","Soldano","Spa Amor Gelato","Tentazioni","VerySicily","Vucciri","Yo.Pi"];
-    const extras = PERSONALIZZAZIONI.filter(p=>!base.includes(p));
-    localStorage.setItem('pers_custom', JSON.stringify(extras));
-  } catch(e){}
-  flashMsg(`✓ "${trimmed}" aggiunta alle personalizzazioni`);
+  // Mostra modale anagrafica personalizzazioni
+  const dialog = document.createElement('div');
+  dialog.id = 'persAnagDialog';
+  dialog.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;';
+
+  dialog.innerHTML = `
+    <div style="background:#fff;border-radius:10px;padding:0;max-width:560px;width:95%;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.3);">
+      <div style="padding:20px 24px 14px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <h3 style="margin:0;font-family:Georgia,serif;font-size:18px;">🏷 Anagrafica personalizzazioni</h3>
+          <p style="margin:4px 0 0;font-size:12px;color:#888;">Gestisci nomi e shelf-life. I giorni vengono usati automaticamente nel Confezionamento.</p>
+        </div>
+        <button id="persAnagClose" style="border:none;background:none;font-size:22px;cursor:pointer;color:#888;padding:0 4px;">×</button>
+      </div>
+      <div style="overflow-y:auto;flex:1;padding:16px 24px;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;" id="persAnagTable">
+          <thead><tr style="border-bottom:2px solid #eee;">
+            <th style="text-align:left;padding:6px 8px;color:#888;font-size:11px;font-family:monospace;text-transform:uppercase;">Nome personalizzazione</th>
+            <th style="text-align:center;padding:6px 8px;color:#888;font-size:11px;font-family:monospace;text-transform:uppercase;width:90px;">Shelf-life (gg)</th>
+            <th style="text-align:center;padding:6px 8px;color:#888;font-size:11px;font-family:monospace;text-transform:uppercase;width:130px;">Imballo</th>
+            <th style="width:36px;"></th>
+          </tr></thead>
+          <tbody id="persAnagBody"></tbody>
+        </table>
+      </div>
+      <div style="padding:14px 24px;border-top:1px solid #eee;background:#fafafa;border-radius:0 0 10px 10px;">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <input id="persAnagNewNome" placeholder="Nuova personalizzazione…" maxlength="60"
+            style="flex:1;min-width:160px;padding:8px 10px;border:1px solid #ccc;border-radius:5px;font-size:13px;">
+          <input id="persAnagNewGiorni" type="number" min="1" max="730" placeholder="gg" value="90"
+            style="width:70px;padding:8px;border:1px solid #ccc;border-radius:5px;font-size:13px;text-align:center;">
+          <select id="persAnagNewImballo" style="padding:8px;border:1px solid #ccc;border-radius:5px;font-size:12px;">
+            <option value="">— Imballo —</option>
+            <option value="26_sicula">26 Sicula</option>
+            <option value="52_sicula">52 Sicula</option>
+            <option value="112_sicula">112 Sicula</option>
+            <option value="camp">Campionatura</option>
+            <option value="gr8">GR.8</option>
+            <option value="26_neutro">26 Neutro</option>
+            <option value="52_neutro">52 Neutro</option>
+            <option value="112_neutro">112 Neutro</option>
+          </select>
+          <button id="persAnagAdd" style="padding:8px 14px;border:none;border-radius:5px;background:#4a2d6b;color:#fff;cursor:pointer;font-size:13px;font-weight:700;white-space:nowrap;">+ Aggiungi</button>
+        </div>
+      </div>
+    </div>`;
+
+  document.body.appendChild(dialog);
+
+  function renderAnagBody(){
+    const list = getPersAnagrafica();
+    const tbody = document.getElementById('persAnagBody');
+    tbody.innerHTML = list.map((p,i)=>`
+      <tr style="border-bottom:1px solid #f0f0f0;" data-i="${i}">
+        <td style="padding:7px 8px;">
+          <input class="panag-nome" data-i="${i}" value="${esc(p.nome)}" maxlength="60"
+            style="width:100%;border:1px solid #e0e0e0;border-radius:4px;padding:5px 7px;font-size:13px;background:${i%2===0?'#fff':'#fafafa'};">
+        </td>
+        <td style="padding:7px 8px;text-align:center;">
+          <input class="panag-giorni" data-i="${i}" type="number" min="1" max="730" value="${p.giorni||90}"
+            style="width:70px;border:1px solid #e0e0e0;border-radius:4px;padding:5px 7px;font-size:13px;text-align:center;background:${i%2===0?'#fff':'#fafafa'};">
+        </td>
+        <td style="padding:7px 8px;text-align:center;">
+          <select class="panag-imballo" data-i="${i}" style="width:120px;border:1px solid #e0e0e0;border-radius:4px;padding:5px 7px;font-size:12px;background:${i%2===0?'#fff':'#fafafa'};">
+            <option value="" ${!p.imballo?'selected':''}>— Nessuno —</option>
+            <option value="26_sicula" ${p.imballo==='26_sicula'?'selected':''}>26 Sicula</option>
+            <option value="52_sicula" ${p.imballo==='52_sicula'?'selected':''}>52 Sicula</option>
+            <option value="112_sicula" ${p.imballo==='112_sicula'?'selected':''}>112 Sicula</option>
+            <option value="camp" ${p.imballo==='camp'?'selected':''}>Campionatura</option>
+            <option value="gr8" ${p.imballo==='gr8'?'selected':''}>GR.8</option>
+            <option value="26_neutro" ${p.imballo==='26_neutro'?'selected':''}>26 Neutro</option>
+            <option value="52_neutro" ${p.imballo==='52_neutro'?'selected':''}>52 Neutro</option>
+            <option value="112_neutro" ${p.imballo==='112_neutro'?'selected':''}>112 Neutro</option>
+          </select>
+        </td>
+        <td style="padding:7px 8px;text-align:center;">
+          <button class="panag-del" data-i="${i}" style="border:none;background:none;cursor:pointer;color:#c0392b;font-size:16px;padding:2px 6px;" title="Elimina">🗑</button>
+        </td>
+      </tr>`).join('');
+
+    // Listeners inline editing
+    tbody.querySelectorAll('.panag-nome').forEach(inp=>{
+      inp.addEventListener('change', ()=>{
+        const list2 = getPersAnagrafica();
+        list2[+inp.dataset.i].nome = inp.value.trim();
+        savePersAnagrafica(list2);
+      });
+    });
+    tbody.querySelectorAll('.panag-giorni').forEach(inp=>{
+      inp.addEventListener('change', ()=>{
+        const list2 = getPersAnagrafica();
+        list2[+inp.dataset.i].giorni = parseInt(inp.value)||90;
+        savePersAnagrafica(list2);
+      });
+    });
+    tbody.querySelectorAll('.panag-imballo').forEach(sel=>{
+      sel.addEventListener('change', ()=>{
+        const list2 = getPersAnagrafica();
+        list2[+sel.dataset.i].imballo = sel.value;
+        savePersAnagrafica(list2);
+      });
+    });
+    tbody.querySelectorAll('.panag-del').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const list2 = getPersAnagrafica();
+        const nome = list2[+btn.dataset.i].nome;
+        if(!confirm(`Eliminare "${nome}"?`)) return;
+        list2.splice(+btn.dataset.i, 1);
+        savePersAnagrafica(list2);
+        renderAnagBody();
+      });
+    });
+  }
+  renderAnagBody();
+
+  // Add new
+  document.getElementById('persAnagAdd').addEventListener('click', ()=>{
+    const nome = document.getElementById('persAnagNewNome').value.trim();
+    const giorni = parseInt(document.getElementById('persAnagNewGiorni').value)||90;
+    const imballo = document.getElementById('persAnagNewImballo').value;
+    if(!nome){ document.getElementById('persAnagNewNome').focus(); return; }
+    const list = getPersAnagrafica();
+    if(list.find(p=>p.nome.toLowerCase()===nome.toLowerCase())){ alert('Esiste già.'); return; }
+    list.push({nome, giorni, imballo});
+    list.sort((a,b)=>a.nome.localeCompare(b.nome));
+    savePersAnagrafica(list);
+    document.getElementById('persAnagNewNome').value='';
+    document.getElementById('persAnagNewGiorni').value='90';
+    document.getElementById('persAnagNewImballo').value='';
+    renderAnagBody();
+    flashMsg(`✓ "${nome}" aggiunta (${giorni} gg)`);
+  });
+
+  document.getElementById('persAnagNewNome').addEventListener('keydown', e=>{
+    if(e.key==='Enter') document.getElementById('persAnagAdd').click();
+  });
+
+  document.getElementById('persAnagClose').addEventListener('click', ()=>dialog.remove());
+  dialog.addEventListener('click', e=>{ if(e.target===dialog) dialog.remove(); });
 });
+
 
 document.getElementById('btnApplyDefaults').addEventListener('click', ()=>{
   const lotto   = document.getElementById('defaultLotto').value.trim();
