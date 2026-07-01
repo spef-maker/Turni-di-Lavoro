@@ -304,7 +304,7 @@ table.anag tr:hover td{background:#faf8f4;}
       <button class="btn" id="btnChangeOperator" style="font-size:11px;padding:3px 8px;">Cambia operatore</button>
       <span style="border-left:1px solid var(--line);height:20px;margin:0 4px;"></span>
       <label style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">
-        Filtra per data lav.:
+        Filtra per data spedizione:
         <input type="date" id="gridFilterDateInput" style="padding:4px 7px;border:1px solid var(--line-strong);border-radius:var(--radius);font-size:12px;">
         <button id="btnApplyGridFilter" style="padding:3px 8px;border:1px solid var(--green);border-radius:4px;background:var(--green);color:#fff;cursor:pointer;font-size:11px;font-weight:700;">Filtra</button>
       </label>
@@ -346,7 +346,7 @@ table.anag tr:hover td{background:#faf8f4;}
             style="padding:5px 7px;border:1px solid #d4a800;border-radius:4px;font-size:12px;background:#fff;">
         </label>
         <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);">
-          Data lav.
+          Data sped.
           <input type="date" id="defaultDataLav"
             style="padding:5px 7px;border:1px solid #d4a800;border-radius:4px;font-size:12px;background:#fff;">
         </label>
@@ -378,7 +378,7 @@ table.anag tr:hover td{background:#faf8f4;}
   <div class="panel" id="tab-produzione">
     <div class="prod-settings no-print" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
       <label style="font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);display:flex;align-items:center;gap:8px;">
-        Filtra per data lavorazione:
+        Filtra per data spedizione:
         <input type="date" id="prodFilterDate" style="padding:6px 8px;border:1px solid var(--line-strong);border-radius:var(--radius);font-size:13px;background:#fff;">
       </label>
       <label style="font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);display:flex;align-items:center;gap:8px;">
@@ -787,7 +787,7 @@ function renderGrid(){
   });
   head1 += `<th rowspan="2" style="min-width:70px;background:#4a3f35;">LOTTO</th>
     <th rowspan="2" style="min-width:100px;background:#4a3f35;">DATA RIC.</th>
-    <th rowspan="2" style="min-width:100px;background:#4a3f35;">DATA LAV.</th>
+    <th rowspan="2" style="min-width:100px;background:#4a3f35;">DATA SPEDIZIONE</th>
     <th rowspan="2" style="min-width:90px;background:#2d4a6b;">CORRIERE</th>
     <th rowspan="2" style="min-width:150px;background:#2d4a6b;">NOTE</th>
     <th rowspan="2" style="min-width:160px;background:#4a2d6b;">PERSONALIZZAZIONE</th>
@@ -1317,12 +1317,12 @@ function renderProduzione(){
   const el = document.getElementById('prodContent');
   if(!el) return;
 
-  // ── Raccoglie tutti gli ordini da tutte le sessioni, raggruppati per data ──
+  // ── Raccoglie tutti gli ordini da tutte le sessioni, raggruppati per DATA SPEDIZIONE ──
   const byDate = {};
   Object.values(orders).forEach(ses=>{
     (ses.rows||[]).forEach(row=>{ 
-      // Usa dataLav se presente, altrimenti dataRic, altrimenti data sessione
-      const date = row.dataLav || row.dataRic || ses.date || '__senza_data__';
+      // Raggruppa sempre per data spedizione (sessione), coerente con Confezionamento
+      const date = row.dataLav || ses.date || row.dataRic || '__senza_data__';
       if(!byDate[date]) byDate[date]=[];
       byDate[date].push(row);
     });
@@ -1588,13 +1588,13 @@ function renderProduzione(){
 
     html += `<div class="prod-section print-section">
       <div class="prod-date-header">
-        <h3>📅 Lavorazione: <strong>${label}${dow}</strong>
+        <h3>📅 Spedizione: <strong>${label}${dow}</strong>
           <span style="font-family:var(--mono);font-size:11px;font-weight:400;color:var(--muted);margin-left:12px;">${rows.length} clienti</span>
         </h3>
       </div>
       <div class="print-header print-only" style="margin-bottom:10px;border-bottom:2px solid #000;padding-bottom:6px;">
         <strong style="font-size:15px;">Siculabrioche · Foglio di Produzione</strong><br>
-        <span>Lavorazione: <strong>${label}${dow}</strong> · ${rows.length} clienti${filterCorriere && filterCorriere!=='__vuoto__' ? ' · Corriere: <strong>'+filterCorriere+'</strong>' : ''}</span>
+        <span>Spedizione: <strong>${label}${dow}</strong> · ${rows.length} clienti${filterCorriere && filterCorriere!=='__vuoto__' ? ' · Corriere: <strong>'+filterCorriere+'</strong>' : ''}</span>
       </div>
       ${cards}
       ${printSummary}
@@ -1898,7 +1898,7 @@ function renderConfezionamento(){
   Object.values(orders).forEach(ses=>{
     (ses.rows||[]).forEach(row=>{
       // La scadenza si calcola dalla DATA SPEDIZIONE (data sessione), non dalla data lavorazione
-      const date = ses.date || row.dataLav || row.dataRic || '__senza_data__';
+      const date = row.dataLav || ses.date || row.dataRic || '__senza_data__';
       if(!byDate[date]) byDate[date]=[];
       byDate[date].push(row);
     });
@@ -2742,7 +2742,7 @@ document.getElementById('btnApplyDefaults').addEventListener('click', ()=>{
   const dataLav = document.getElementById('defaultDataLav').value;
 
   if(!lotto && !dataRic && !dataLav){
-    alert('Inserisci almeno un valore predefinito da applicare (Lotto, Data ric. o Data lav.)');
+    alert('Inserisci almeno un valore predefinito da applicare (Lotto, Data ric. o Data sped.)');
     return;
   }
 
