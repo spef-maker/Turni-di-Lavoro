@@ -1631,7 +1631,7 @@ function startAutoSave(){
     const hasData = Object.values(orders).some(s=>(s.rows||[]).length>0);
     if(!hasData) return;
     setSyncStatus('saving','Auto-salvataggio…');
-    db.ref('ordini_siculabrioche/v1').set({orders, clients})
+    (() => { const _s = Object.keys(orders).length > 0 || clients.length > 0; if(_s) db.ref('ordini_siculabrioche/v1').set({orders, clients}); else console.warn('BLOCCO SALVATAGGIO: dati vuoti, non sovrascrivo Firebase'); })()
       .then(()=>{ setSyncStatus('ok','Auto-salvato ✓'); saveLocal(); })
       .catch(()=>setSyncStatus('err','Errore auto-salvataggio'));
   }, 5 * 60 * 1000); // ogni 5 minuti
@@ -1644,7 +1644,7 @@ window.addEventListener('beforeunload', ()=>{
   // Tenta anche Firebase con sendBeacon (best-effort)
   if(db){
     try{
-      db.ref('ordini_siculabrioche/v1').set({orders, clients});
+      (() => { const _s = Object.keys(orders).length > 0 || clients.length > 0; if(_s) db.ref('ordini_siculabrioche/v1').set({orders, clients}); else console.warn('BLOCCO SALVATAGGIO: dati vuoti, non sovrascrivo Firebase'); })();
     } catch(e){}
   }
 });
@@ -1863,9 +1863,18 @@ function calcScadenza(row){
   }
 
   // 5. Personalizzazione (non estera) → usa anagrafica per giorni
+  // Ma solo se non duplica un'etichetta già aggiunta da un prodotto
   if(row.pers && row.pers.trim()){
-    const giorni = getShelfLife(row.pers);
-    results.push({ etichetta: row.pers, giorni });
+    const persNorm = row.pers.trim().toUpperCase();
+    const alreadyHas = results.some(r=> r.etichetta.toUpperCase() === persNorm
+      || persNorm.includes('ROMANA CIOC') && r.etichetta === 'LA ROMANA CIOCCOLATO'
+      || persNorm.includes('ROMANA MINI') && r.etichetta === 'ROMANA MINI'
+      || (persNorm === 'ROMANA' || persNorm.includes('LA ROMANA')) && r.etichetta === 'LA ROMANA'
+    );
+    if(!alreadyHas){
+      const giorni = getShelfLife(row.pers);
+      results.push({ etichetta: row.pers, giorni });
+    }
   }
 
   // 6. Se non c'è nessuna delle precedenti → Standard
@@ -1937,17 +1946,31 @@ function renderConfezionamento(){
     const byLabel = {};
     rows.forEach(row=>{
       const scs = calcScadenza(row);
-      // Calcola pz totali della riga
-      let rowPz = 0;
-      PRODUCTS.forEach(p=>{ p.imballi.forEach(imb=>{ rowPz += parseInt((row.qtys||{})[p.id]?.[imb]||0)*p.pz_per_imballo[imb]; }); });
+
+      // Per ogni etichetta, calcola SOLO i pz relativi a quei prodotti
       scs.forEach(sc=>{
+        // Calcola pz specifici per questa etichetta
+        let etPz = 0;
+        if(sc.etichetta === 'LA ROMANA CIOCCOLATO'){
+          const p = PRODUCTS.find(x=>x.id==='romanachoco');
+          if(p) p.imballi.forEach(imb=>{ etPz += parseInt((row.qtys||{})[p.id]?.[imb]||0)*p.pz_per_imballo[imb]; });
+        } else if(sc.etichetta === 'ROMANA MINI'){
+          const p = PRODUCTS.find(x=>x.id==='romanamini');
+          if(p) p.imballi.forEach(imb=>{ etPz += parseInt((row.qtys||{})[p.id]?.[imb]||0)*p.pz_per_imballo[imb]; });
+        } else if(sc.etichetta === 'LA ROMANA'){
+          const p = PRODUCTS.find(x=>x.id==='romana');
+          if(p) p.imballi.forEach(imb=>{ etPz += parseInt((row.qtys||{})[p.id]?.[imb]||0)*p.pz_per_imballo[imb]; });
+        } else {
+          // Personalizzazione o Standard → somma tutti i prodotti della riga
+          PRODUCTS.forEach(p=>{ p.imballi.forEach(imb=>{ etPz += parseInt((row.qtys||{})[p.id]?.[imb]||0)*p.pz_per_imballo[imb]; }); });
+        }
+
         if(!byLabel[sc.etichetta]){
           byLabel[sc.etichetta] = { giorni: sc.giorni, rows: [], totPz: 0 };
         }
-        // Evita di aggiungere la stessa riga più volte per la stessa etichetta
         if(!byLabel[sc.etichetta].rows.includes(row)){
           byLabel[sc.etichetta].rows.push(row);
-          byLabel[sc.etichetta].totPz += rowPz;
+          byLabel[sc.etichetta].totPz += etPz;
         }
       });
     });
@@ -2205,30 +2228,47 @@ function initFirebase(){
           if(vuotePrima.length){
             vuotePrima.forEach(k=>delete orders[k]);
             saveLocal();
-            db.ref('ordini_siculabrioche/v1').set({orders, clients}).catch(()=>{});
+            (() => { const _s = Object.keys(orders).length > 0 || clients.length > 0; if(_s) db.ref('ordini_siculabrioche/v1').set({orders, clients}); else console.warn('BLOCCO SALVATAGGIO: dati vuoti, non sovrascrivo Firebase'); })().catch(()=>{});
           }
         } else {
           // Firebase vuoto → carica i dati locali
           const hasLocalData = Object.keys(orders).length > 0 || clients.length > 0;
           if(hasLocalData){
             setSyncStatus('saving','Caricamento dati su Firebase…');
-            db.ref('ordini_siculabrioche/v1').set({orders, clients})
+            (() => { const _s = Object.keys(orders).length > 0 || clients.length > 0; if(_s) db.ref('ordini_siculabrioche/v1').set({orders, clients}); else console.warn('BLOCCO SALVATAGGIO: dati vuoti, non sovrascrivo Firebase'); })()
               .then(()=>setSyncStatus('ok','Dati caricati ✓'))
               .catch(()=>setSyncStatus('err','Errore caricamento'));
           }
         }
       } else {
         // Aggiornamento da un'altra persona
-        isRemoteUpdate = true;
-        if(data){
-          if(data.clients && Array.isArray(data.clients)) clients = data.clients;
-          if(data.orders) orders = data.orders;
-          // Pulisci anche gli aggiornamenti in arrivo
-          const vuote = Object.keys(orders).filter(k=>!(orders[k].rows||[]).length && k!==currentSession);
-          vuote.forEach(k=>delete orders[k]);
-          saveLocal();
+        // PROTEZIONE: non sovrascrivere se Firebase ha meno dati di quelli locali
+        if(data && data.orders){
+          const remoteSessionCount = Object.keys(data.orders).length;
+          const localSessionCount = Object.keys(orders).length;
+          const remoteTotalRows = Object.values(data.orders).reduce((s,x)=>s+(x.rows||[]).length,0);
+          const localTotalRows = Object.values(orders).reduce((s,x)=>s+(x.rows||[]).length,0);
+
+          if(remoteTotalRows < localTotalRows * 0.5 && localTotalRows > 10){
+            // Firebase ha meno della metà dei dati locali → probabile cancellazione accidentale, ignora
+            console.warn(`PROTEZIONE DATI: Firebase ha ${remoteTotalRows} righe, locale ha ${localTotalRows} — ignoro aggiornamento`);
+            setSyncStatus('err','⚠️ Aggiornamento sospetto bloccato');
+            setTimeout(()=>{ isRemoteUpdate=false; }, 0);
+          } else {
+            isRemoteUpdate = true;
+            if(data.clients && Array.isArray(data.clients)) clients = data.clients;
+            if(data.orders) orders = data.orders;
+            const vuote = Object.keys(orders).filter(k=>!(orders[k].rows||[]).length && k!==currentSession);
+            vuote.forEach(k=>delete orders[k]);
+            saveLocal();
+            setTimeout(()=>{ isRemoteUpdate=false; }, 0);
+          }
+        } else if(!data){
+          // Firebase è diventato null — BLOCCA, potrebbe essere cancellazione accidentale
+          console.warn('PROTEZIONE: Firebase restituisce null, dati locali preservati');
+          setSyncStatus('err','⚠️ Firebase vuoto — dati locali preservati');
+          setTimeout(()=>{ isRemoteUpdate=false; }, 0);
         }
-        setTimeout(()=>{ isRemoteUpdate=false; }, 0);
       }
 
       document.getElementById('loading').classList.remove('vis');
@@ -2332,7 +2372,7 @@ document.getElementById('btnRestore').addEventListener('change', function(e){
       // Salva subito su Firebase così tutte le colleghe vedono i dati
       if(db){
         setSyncStatus('saving','Caricamento su Firebase…');
-        db.ref('ordini_siculabrioche/v1').set({orders, clients})
+        (() => { const _s = Object.keys(orders).length > 0 || clients.length > 0; if(_s) db.ref('ordini_siculabrioche/v1').set({orders, clients}); else console.warn('BLOCCO SALVATAGGIO: dati vuoti, non sovrascrivo Firebase'); })()
           .then(()=>{ setSyncStatus('ok','Dati condivisi ✓'); flashMsg('✓ Dati ripristinati e condivisi con tutte le colleghe!'); })
           .catch(()=>{ flashMsg('Dati ripristinati localmente (errore Firebase)'); });
       } else {
@@ -2462,7 +2502,7 @@ document.getElementById('btnPurgeByDate').addEventListener('click', ()=>{
     // Salva su Firebase per propagare la pulizia a tutti
     if(db){
       setSyncStatus('saving','Pulizia in corso…');
-      db.ref('ordini_siculabrioche/v1').set({orders, clients})
+      (() => { const _s = Object.keys(orders).length > 0 || clients.length > 0; if(_s) db.ref('ordini_siculabrioche/v1').set({orders, clients}); else console.warn('BLOCCO SALVATAGGIO: dati vuoti, non sovrascrivo Firebase'); })()
         .then(()=>{ setSyncStatus('ok','Pulizia completata ✓'); })
         .catch(()=>setSyncStatus('err','Errore salvataggio'));
     }
